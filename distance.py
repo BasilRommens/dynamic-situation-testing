@@ -29,8 +29,7 @@ def total_distance(t_1, t_2, all_tuples, attribute_types,
             summation += nominal_distance(v_1, v_2)
         elif attribute_type == 'ordinal':
             ranked_values = ranked_values_per_ord[idx]
-            v_idx_1 = ranked_values.index(v_1)
-            v_idx_2 = ranked_values.index(v_2)
+            v_idx_1, v_idx_2 = v_1, v_2
 
             summation += ordinal_distance(v_idx_1, v_idx_2, ranked_values)
 
