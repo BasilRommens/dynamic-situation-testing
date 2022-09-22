@@ -1,8 +1,8 @@
 import numpy as np
 
 
-def total_distance(t_1, t_2, all_tuples, attribute_types,
-                   ranked_values_per_ord):
+def total_distance(t_1, t_2, all_tuples, attributes, attribute_types,
+                   ranked_values_per_ord, decision_attribute):
     """
     determine the total distance between two tuples
     :param t_1: first tuple
@@ -10,13 +10,18 @@ def total_distance(t_1, t_2, all_tuples, attribute_types,
     :param all_tuples: all the tuples in the dataset
     :param attribute_types: the types at each index of a tuple
     :param ranked_values_per_ord: the ranked values for each ordinal attribute
+    :param decision_attribute: decision attribute to be ignored for distance
     :return: total distance between the two tuples
     """
     # the sum placed in the numerator for each tuple-value
     summation = 0
     # go over all tuple values
-    for idx, (v_1, v_2) in zip(t_1, t_2):
-        attribute_type = attribute_types[idx] # determine attribute type
+    for idx, (v_1, v_2) in enumerate(zip(t_1, t_2)):
+        # if the attribute is the decision attribute continue
+        if idx == attributes.index(list(decision_attribute.keys())[0]):
+            continue
+
+        attribute_type = attribute_types[attributes[idx]]  # determine attribute type
 
         # determine the distance metric based on the attribute type
         if attribute_type == 'interval':
@@ -28,7 +33,7 @@ def total_distance(t_1, t_2, all_tuples, attribute_types,
         elif attribute_type == 'nominal':
             summation += nominal_distance(v_1, v_2)
         elif attribute_type == 'ordinal':
-            ranked_values = ranked_values_per_ord[idx]
+            ranked_values = ranked_values_per_ord[attributes[idx]]
             v_idx_1, v_idx_2 = v_1, v_2
 
             summation += ordinal_distance(v_idx_1, v_idx_2, ranked_values)

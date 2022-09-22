@@ -55,13 +55,13 @@ def process_tuples(all_tuples, attributes, attribute_types,
                    ordinal_attribute_values, attributes_to_ignore):
     """
     process the tuples to the correct types and remove their attributes to
-    ignore
+    ignore and return the processed attribute list too
     :param all_tuples: all the tuples to process
     :param attributes: the attributes of the tuples
     :param attribute_types: the types of all the attributes
     :param ordinal_attribute_values: the ordinal attribute values
     :param attributes_to_ignore: attributes to ignore
-    :return: the processed tuples
+    :return: the processed tuples and attributes
     """
     # remove the redundant attributes
     all_tuples, attributes = remove_redundant_attributes(all_tuples, attributes,
@@ -84,7 +84,7 @@ def process_tuples(all_tuples, attributes, attribute_types,
 
         tuples.append(new_tuple)
 
-    return tuples
+    return tuples, attributes
 
 
 def process_ranked_values(ordinal_attribute_values):
@@ -100,39 +100,74 @@ def process_ranked_values(ordinal_attribute_values):
     return ranked_values
 
 
-def process_all(all_tuples, attributes, attribute_types,
-                ordinal_attribute_values, attributes_to_ignore):
+def process_decision_attribute(attribute_types, decision_attribute,
+                               ordinal_attribute_values):
     """
-    process all the tuples and create the ranked values
+    process the decision attribute to the correct type
+    :param attribute_types: the types of the attributes
+    :param decision_attribute: the decision attribute
+    :param ordinal_attribute_values: the ordinal attribute values
+    :return: the processed decision attribute
+    """
+    decision_attribute_name = list(decision_attribute.keys())[0]
+    decision_attribute_value = decision_attribute[decision_attribute_name]
+    decision_attribute_type = attribute_types[decision_attribute_name]
+
+    # convert the value to the correct type
+    decision_attribute_value = convert_value(decision_attribute_value,
+                                             decision_attribute_name,
+                                             decision_attribute_type,
+                                             ordinal_attribute_values)
+
+    return {decision_attribute_name: decision_attribute_value}
+
+
+def process_all(all_tuples, attributes, attribute_types,
+                ordinal_attribute_values, attributes_to_ignore,
+                decision_attribute):
+    """
+    process all the tuples, create the ranked values and return attributes that
+    aren't ignored
     :param all_tuples: all the tuples to process
     :param attributes: their corresponding attributes
     :param attribute_types: the types of the attributes
     :param ordinal_attribute_values: the ordinal attribute values
     :param attributes_to_ignore: the attributes to ignore
-    :return: the processed tuples and ranked values
+    :param decision_attribute: the decision attribute
+    :return: the processed tuples, ranked values, attributes and decision
+    attribute
     """
     # process the tuples
-    tuples = process_tuples(all_tuples, attributes, attribute_types,
-                            ordinal_attribute_values, attributes_to_ignore)
+    tuples, attributes = process_tuples(all_tuples, attributes, attribute_types,
+                                        ordinal_attribute_values,
+                                        attributes_to_ignore)
 
     # process the ordinal attribute values to ranked values
     ranked_values = process_ranked_values(ordinal_attribute_values)
+    # process decision attribute
+    decision_attribute = process_decision_attribute(attribute_types, decision_attribute,
+                                                    ordinal_attribute_values)
 
-    return tuples, ranked_values
+    return tuples, ranked_values, attributes, decision_attribute
 
 
 if __name__ == "__main__":
     import inout
 
     json_file_name = 'german_credit_data.json'
-    csv_file_name = 'german_credit_data.csv'
+    csv_file_name = 'german_credit_data_class.csv'
     # open the files
-    all_tuples, attributes, attribute_types, ordinal_attribute_values, attributes_to_ignore = inout.read_data(
+    all_tuples, attributes, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = inout.read_data(
         json_file_name, csv_file_name)
 
     # process the data
-    tuples, ranked_values = process_all(all_tuples, attributes, attribute_types,
-                                        ordinal_attribute_values,
-                                        attributes_to_ignore)
+    tuples, ranked_values, attributes, decision_attribute = process_all(
+        all_tuples, attributes,
+        attribute_types,
+        ordinal_attribute_values,
+        attributes_to_ignore,
+        decision_attribute)
     print(tuples)
     print(ranked_values)
+    print(attributes)
+    print(decision_attribute)
