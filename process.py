@@ -145,7 +145,8 @@ def process_all(all_tuples, attributes, attribute_types,
     # process the ordinal attribute values to ranked values
     ranked_values = process_ranked_values(ordinal_attribute_values)
     # process decision attribute
-    decision_attribute = process_decision_attribute(attribute_types, decision_attribute,
+    decision_attribute = process_decision_attribute(attribute_types,
+                                                    decision_attribute,
                                                     ordinal_attribute_values)
 
     return tuples, ranked_values, attributes, decision_attribute

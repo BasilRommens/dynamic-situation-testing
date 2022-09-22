@@ -2,7 +2,8 @@ import numpy as np
 
 
 def total_distance(t_1, t_2, all_tuples, attributes, attribute_types,
-                   ranked_values_per_ord, decision_attribute):
+                   ranked_values_per_ord, decision_attribute,
+                   protected_attributes):
     """
     determine the total distance between two tuples
     :param t_1: first tuple
@@ -11,6 +12,7 @@ def total_distance(t_1, t_2, all_tuples, attributes, attribute_types,
     :param attribute_types: the types at each index of a tuple
     :param ranked_values_per_ord: the ranked values for each ordinal attribute
     :param decision_attribute: decision attribute to be ignored for distance
+    :param protected_attributes: protected attributes to be ignored for distance
     :return: total distance between the two tuples
     """
     # the sum placed in the numerator for each tuple-value
@@ -20,8 +22,13 @@ def total_distance(t_1, t_2, all_tuples, attributes, attribute_types,
         # if the attribute is the decision attribute continue
         if idx == attributes.index(list(decision_attribute.keys())[0]):
             continue
+        # if the attribute is a protected attribute continue
+        if idx in [attributes.index(protected_attribute) for protected_attribute
+                   in protected_attributes.keys()]:
+            continue
 
-        attribute_type = attribute_types[attributes[idx]]  # determine attribute type
+        attribute_type = attribute_types[
+            attributes[idx]]  # determine attribute type
 
         # determine the distance metric based on the attribute type
         if attribute_type == 'interval':

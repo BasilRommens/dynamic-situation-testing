@@ -1,18 +1,18 @@
+import json
+
+from distance import total_distance
 from inout import read_data
 from process import process_all
-from distance import total_distance
-from ast import literal_eval as make_tuple
-import json
 
 
 def determine_distances(tuples, ranked_values, attribute_types, attributes,
-                        decision_attribute):
+                        decision_attribute, protected_attributes):
     distance_dict = dict()
     for idx_1, t_1 in enumerate(tuples):
         for idx_2, t_2 in enumerate(tuples):
             distance = total_distance(t_1, t_2, tuples, attributes,
                                       attribute_types, ranked_values,
-                                      decision_attribute)
+                                      decision_attribute, protected_attributes)
             distance_dict[str((idx_1, idx_2))] = distance
     return distance_dict
 
@@ -62,6 +62,7 @@ def knn_situation(k, tuples, attributes, distance_dict, protected_attributes,
     decision_attribute_name = list(decision_attribute.keys())[0]
     decision_attribute_value = decision_attribute[decision_attribute_name]
     decision_attribute_idx = attributes.index(decision_attribute_name)
+    valid_tuples = list()
     for idx, tuple in enumerate(tuples):
         # continue if the idx is in the unprotected group
         if idx in unprotected_tuple_idxs:
@@ -84,8 +85,8 @@ def knn_situation(k, tuples, attributes, distance_dict, protected_attributes,
                   tuples[idx][decision_attribute_idx] == tuple[
                       decision_attribute_idx]) / k
         diff = p_1 - p_2
-        if diff > 0.05:
-            print(idx, diff)
+        valid_tuples.append((idx, diff))
+    return valid_tuples
 
 
 if __name__ == "__main__":
@@ -101,17 +102,19 @@ if __name__ == "__main__":
         attributes_to_ignore,
         decision_attribute)
     # determine the distances
+    protected_attributes = {"Sex": ["male"]}
     distance_dict = determine_distances(tuples, ranked_values, attribute_types,
-                                        attributes, decision_attribute)
+                                        attributes, decision_attribute,
+                                        protected_attributes)
     # write json
     json_data = json.dumps(distance_dict)
-    open('distance_dict.json', 'w').write(json_data)
+    open('data/distance_dict.json', 'w').write(json_data)
 
     # read the same json
-    distance_dict = json.loads(open('distance_dict.json').read())
+    distance_dict = json.loads(open('data/distance_dict.json').read())
 
     # apply the situation testing algorithm with knn
     k = 16
-    protected_attributes = {"Sex": ["male"]}
-    knn_situation(k, tuples, attributes, distance_dict, protected_attributes,
-                  decision_attribute)
+    valid_tuples = knn_situation(k, tuples, attributes, distance_dict,
+                                 protected_attributes, decision_attribute)
+    print(valid_tuples)
