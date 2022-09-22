@@ -25,7 +25,7 @@ def check_part_of_protected_group(tuple, protected_attributes, attributes):
     return True
 
 
-def knn_group(k, tuple_idx, group_idxs, distance):
+def knn_group(k, tuple_idx, group_idxs, distance_dict):
     idx_distance = list()
     for other_tuple_idx in group_idxs:
         # skip the tuple that has the same index as the one we are determining
