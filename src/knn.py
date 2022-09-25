@@ -108,10 +108,10 @@ if __name__ == "__main__":
                                         protected_attributes)
     # write json
     json_data = json.dumps(distance_dict)
-    open('data/distance_dict.json', 'w').write(json_data)
+    open('../data/distance_dict.json', 'w').write(json_data)
 
     # read the same json
-    distance_dict = json.loads(open('data/distance_dict.json').read())
+    distance_dict = json.loads(open('../data/distance_dict.json').read())
 
     # apply the situation testing algorithm with knn
     k = 16

@@ -1,3 +1,4 @@
+import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
@@ -48,7 +49,19 @@ def visualize_tuples(tuples, visualization_param):
     plt.show()
 
 
+def visualize_data(data, x, y, color):
+    # plot the results
+    ax = sns.scatterplot(x=x, y=y, data=data, hue=color)
+
+    # specify labels
+    ax.set(xlabel=x, ylabel=y, title='Scatter plot')
+
+    plt.show()
+
+
 if __name__ == '__main__':
+    df = pd.read_csv("../data/german_credit_data_class.csv")
+    visualize_data(df, 'Credit amount', 'Age', 'Class')
     # read the data from the csv and json file
     all_tuples, attributes, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = read_data(
         'german_credit_data.json', 'german_credit_data_class.csv')
