@@ -42,5 +42,7 @@ if __name__ == "__main__":
     k = 16
     valid_tuples = knn_situation(k, tuples, attributes, distance_dict,
                                  protected_attributes, decision_attribute)
+
+    # discover the discriminated tuples among the valid tuples
     discriminated_tuples = discover_disc_situation(valid_tuples, threshold=0.05)
     print(discriminated_tuples)
