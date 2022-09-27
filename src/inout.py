@@ -11,7 +11,7 @@ def read_csv(file_name):
     :return: the tuples and attributes of the csv file
     """
     lines = []
-    with open(f'data/{file_name}', 'r') as csv_file:
+    with open(f'../data/{file_name}', 'r') as csv_file:
         csv_reader = csv.reader(csv_file)
         attributes = next(csv_reader)  # get the attributes
 
@@ -30,7 +30,7 @@ def read_json(file_name):
     :return: the attribute types, ordinal attribute values, attributes to ignore,
     and the decision attribute along with its value
     """
-    f = open(f'data/{file_name}', 'r')  # open file
+    f = open(f'../data/{file_name}', 'r')  # open file
     json_dict = json.load(f)  # convert to dict
 
     # get the attribute types

@@ -38,13 +38,27 @@ def visualize_tuples(tuples, visualization_param):
     # determine x and y values for plotting
     x = diff_values
     y = percentage_values
+    # add a (max t, 0) point
+    # x = np.insert(x, 0, max(x))
+    # y = np.insert(y, 0, 0)
+
+    # set figure size before plotting
+    plt.figure(figsize=(7, 4.8))
 
     # plot the results
     ax = sns.lineplot(x, y)
 
     # specify labels
     ax.set(xlabel=visualization_param.x_axis, ylabel=visualization_param.y_axis,
-           title=visualization_param.title, xlim=(-1, 1), ylim=(0, 1))
+           title=visualization_param.title, xlim=(-1, 1), ylim=(-0.1, 1.1))
+    # adding a grid to the plot
+    ax.grid(visible=True, which='major', color='black', linewidth=1.0,
+            linestyle=":")
+    ax.grid(visible=True, which='minor', color='black', linewidth=0.5,
+            linestyle=":")
+    # adding ticks on the correct spots
+    ax.set_xticks(np.arange(-1, 1.1, 0.5))
+    ax.set_yticks([0, 0.2, 0.4, 0.5, 0.6, 0.8, 1])
 
     plt.show()
 

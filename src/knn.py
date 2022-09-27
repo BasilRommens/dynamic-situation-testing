@@ -67,7 +67,7 @@ def knn_situation(k, tuples, attributes, distance_dict, protected_attributes,
         # continue if the idx is in the unprotected group
         if idx in unprotected_tuple_idxs:
             continue
-        # if decision of idx is not same as decision then continue
+        # if decision of idx is not same as decision attribute then continue
         if tuple[decision_attribute_idx] != decision_attribute_value:
             continue
 
@@ -78,15 +78,21 @@ def knn_situation(k, tuples, attributes, distance_dict, protected_attributes,
 
         # calculate the probability of the tuple having the same outcome as the
         # k nearest neighbors in the (un)protected group
-        p_1 = sum(1 for idx, _ in idx_group_prot if
-                  tuples[idx][decision_attribute_idx] == tuple[
-                      decision_attribute_idx]) / k
-        p_2 = sum(1 for idx, _ in idx_group_unprot if
-                  tuples[idx][decision_attribute_idx] == tuple[
-                      decision_attribute_idx]) / k
+        p_1 = calculate_prop_dec_group(decision_attribute_idx, idx_group_prot,
+                                       k, tuple, tuples)
+        p_2 = calculate_prop_dec_group(decision_attribute_idx, idx_group_unprot,
+                                       k, tuple, tuples)
         diff = p_1 - p_2
         valid_tuples.append((idx, diff))
     return valid_tuples
+
+
+def calculate_prop_dec_group(decision_attribute_idx, idx_group, k, tuple,
+                             tuples):
+    p = sum(1 for idx, _ in idx_group if
+            tuples[idx][decision_attribute_idx] == tuple[
+                decision_attribute_idx]) / k
+    return p
 
 
 if __name__ == "__main__":
