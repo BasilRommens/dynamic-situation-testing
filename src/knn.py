@@ -71,20 +71,27 @@ def knn_situation(k, tuples, attributes, distance_dict, protected_attributes,
         if tuple[decision_attribute_idx] != decision_attribute_value:
             continue
 
-        # find the k nearest neighbors in the (un)protected group
-        idx_group_prot = knn_group(k, idx, protected_tuple_idxs, distance_dict)
-        idx_group_unprot = knn_group(k, idx, unprotected_tuple_idxs,
-                                     distance_dict)
-
-        # calculate the probability of the tuple having the same outcome as the
-        # k nearest neighbors in the (un)protected group
-        p_1 = calculate_prop_dec_group(decision_attribute_idx, idx_group_prot,
-                                       k, tuple, tuples)
-        p_2 = calculate_prop_dec_group(decision_attribute_idx, idx_group_unprot,
-                                       k, tuple, tuples)
-        diff = p_1 - p_2
-        valid_tuples.append((idx, diff))
+        _diff = diff(decision_attribute_idx, distance_dict, idx, k,
+                     protected_tuple_idxs, tuple, tuples,
+                     unprotected_tuple_idxs)
+        valid_tuples.append((idx, _diff))
     return valid_tuples
+
+
+def diff(decision_attribute_idx, distance_dict, idx, k, protected_tuple_idxs,
+         tuple, tuples, unprotected_tuple_idxs):
+    # find the k nearest neighbors in the (un)protected group
+    idx_group_prot = knn_group(k, idx, protected_tuple_idxs, distance_dict)
+    idx_group_unprot = knn_group(k, idx, unprotected_tuple_idxs,
+                                 distance_dict)
+    # calculate the probability of the tuple having the same outcome as the
+    # k nearest neighbors in the (un)protected group
+    p_1 = calculate_prop_dec_group(decision_attribute_idx, idx_group_prot,
+                                   k, tuple, tuples)
+    p_2 = calculate_prop_dec_group(decision_attribute_idx, idx_group_unprot,
+                                   k, tuple, tuples)
+    _diff = p_1 - p_2
+    return _diff
 
 
 def calculate_prop_dec_group(decision_attribute_idx, idx_group, k, tuple,
