@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn import preprocessing
 
 
 def convert_value(value, attribute, attribute_type, ordinal_attribute_values):
@@ -12,8 +13,8 @@ def convert_value(value, attribute, attribute_type, ordinal_attribute_values):
     :return: the converted value
     """
     # if no value is given return None
-    if value == 'NA':
-        return None
+    if type(value) == np.float and np.isnan(value):
+        return np.nan
 
     # determine the value to return based on the attribute type
     if attribute_type == 'interval':
@@ -21,11 +22,13 @@ def convert_value(value, attribute, attribute_type, ordinal_attribute_values):
     elif attribute_type == 'nominal':
         return value
     elif attribute_type == 'ordinal':
+        if type(value) != str:
+            value = str(value)
         # get the ranked values for the ordinal attribute
         return int(ordinal_attribute_values[attribute][value])
 
 
-def remove_redundant_attributes(all_tuples, attributes, attributes_to_ignore):
+def remove_redundant_attributes(all_tuples, attributes_to_ignore):
     """
     removes the attributes that are in the attributes_to_ignore list, this also
     happens in the all tuples.
@@ -34,28 +37,16 @@ def remove_redundant_attributes(all_tuples, attributes, attributes_to_ignore):
     :param attributes_to_ignore: the attributes to ignore
     :return: the tuples and attributes without the redundant attributes
     """
-    # collect the idces of all the attributes not to be ignored
-    attribute_idces = list()
-    for attribute in attributes:
-        if attribute in attributes_to_ignore:
-            continue
-        attribute_idx = attributes.index(attribute)
-        attribute_idces.append(attribute_idx)
+    all_tuples = all_tuples.drop(columns=attributes_to_ignore)
 
-    # keep only the attributes not to be ignored
-    attributes = list(np.array(attributes)[attribute_idces])
-    # transform the tuples to only contain the attributes not to be ignored
-    all_tuples = list(
-        map(lambda x: list(np.array(x)[attribute_idces]), all_tuples))
-
-    return all_tuples, attributes
+    return all_tuples
 
 
-def process_tuples(all_tuples, attributes, attribute_types,
+def process_tuples(all_tuples, attribute_types,
                    ordinal_attribute_values, attributes_to_ignore):
     """
     process the tuples to the correct types and remove their attributes to
-    ignore and return the processed attribute list too
+    ignore and return the processed attribute list
     :param all_tuples: all the tuples to process
     :param attributes: the attributes of the tuples
     :param attribute_types: the types of all the attributes
@@ -64,27 +55,25 @@ def process_tuples(all_tuples, attributes, attribute_types,
     :return: the processed tuples and attributes
     """
     # remove the redundant attributes
-    all_tuples, attributes = remove_redundant_attributes(all_tuples, attributes,
-                                                         attributes_to_ignore)
+    all_tuples = remove_redundant_attributes(all_tuples, attributes_to_ignore)
+    attributes = list(all_tuples.columns)
 
     # convert the values to the correct type
-    tuples = list()
-    for tuple in all_tuples:
-        new_tuple = []
-        for idx, value in enumerate(tuple):
+    for tuple_idx in all_tuples.index:
+        new_tuple = list()
+        for idx, attribute in enumerate(attributes):
+            tuple_value = all_tuples[attribute][tuple_idx]
             # get type per attribute
-            attribute = attributes[idx]
             attribute_type = attribute_types[attribute]
 
             # convert the value to the correct type
-            new_value = convert_value(value, attribute, attribute_type,
+            new_value = convert_value(tuple_value, attribute, attribute_type,
                                       ordinal_attribute_values)
-
             new_tuple.append(new_value)
 
-        tuples.append(new_tuple)
+        all_tuples.iloc[tuple_idx] = new_tuple
 
-    return tuples, attributes
+    return all_tuples, attributes
 
 
 def process_ranked_values(ordinal_attribute_values):
@@ -122,7 +111,7 @@ def process_decision_attribute(attribute_types, decision_attribute,
     return {decision_attribute_name: decision_attribute_value}
 
 
-def process_all(all_tuples, attributes, attribute_types,
+def process_all(all_tuples, attribute_types,
                 ordinal_attribute_values, attributes_to_ignore,
                 decision_attribute):
     """
@@ -138,7 +127,7 @@ def process_all(all_tuples, attributes, attribute_types,
     attribute
     """
     # process the tuples
-    tuples, attributes = process_tuples(all_tuples, attributes, attribute_types,
+    tuples, attributes = process_tuples(all_tuples, attribute_types,
                                         ordinal_attribute_values,
                                         attributes_to_ignore)
 
@@ -149,7 +138,7 @@ def process_all(all_tuples, attributes, attribute_types,
                                                     decision_attribute,
                                                     ordinal_attribute_values)
 
-    return tuples, ranked_values, attributes, decision_attribute
+    return tuples, ranked_values, decision_attribute
 
 
 if __name__ == "__main__":
@@ -158,17 +147,33 @@ if __name__ == "__main__":
     json_file_name = 'german_credit_data.json'
     csv_file_name = 'german_credit_data_class.csv'
     # open the files
-    all_tuples, attributes, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = inout.read_data(
+    all_tuples, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = inout.read_data(
         json_file_name, csv_file_name)
 
     # process the data
-    tuples, ranked_values, attributes, decision_attribute = process_all(
-        all_tuples, attributes,
+    tuples, ranked_values, decision_attribute = process_all(
+        all_tuples,
         attribute_types,
         ordinal_attribute_values,
         attributes_to_ignore,
         decision_attribute)
     print(tuples)
     print(ranked_values)
-    print(attributes)
     print(decision_attribute)
+
+
+def make_numeric(df):
+    """
+    Converts all the values in numeric values instead of strings
+    :param df: the dataframe containing
+    :return: the dataframe with solely numeric values
+    """
+    for col in df.columns:
+        if df[col].dtype != 'object':
+            continue
+        le = preprocessing.LabelEncoder()
+        df[col] = le.fit_transform(df[col])
+    # convert all the types of the columns to floats
+    for col in df.columns:
+        df[col] = df[col].astype(np.float64)
+    return df

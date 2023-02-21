@@ -1,48 +1,52 @@
-import csv
 import json
 
+import pandas as pd
 
-def read_csv(file_name):
-    """
-    Reads the data from the csv file and returns the tuples and attributes.
-    The file should have the attributes in the first row and the tuples in the
-    second row.
-    :param file_name: the file name of the csv file located in the data folder
-    :return: the tuples and attributes of the csv file
-    """
-    lines = []
-    with open(f'../data/{file_name}', 'r') as csv_file:
-        csv_reader = csv.reader(csv_file)
-        attributes = next(csv_reader)  # get the attributes
-
-        # store the lines in a list
-        for line in csv_reader:
-            lines.append(line)
-
-    return lines, attributes
+from process import make_numeric
 
 
-def read_json(file_name):
-    """
-    Reads the attribute types, ordinal attribute values and attributes to ignore
-    from a json file with file name and returns them.
-    :param file_name: the name of the json file located in the data folder
-    :return: the attribute types, ordinal attribute values, attributes to ignore,
-    and the decision attribute along with its value
-    """
-    f = open(f'../data/{file_name}', 'r')  # open file
-    json_dict = json.load(f)  # convert to dict
+class Read:
+    def __init__(self, f_name, f_type):
+        self.f_name = f_name
+        self.f_type = f_type
 
-    # get the attribute types
-    attribute_types = json_dict['attribute_types']
-    # get ranked values per ordinal attribute
-    ordinal_attribute_values = json_dict['ordinal_attribute_values']
-    # get attributes to be ignored
-    attributes_to_ignore = json_dict['attributes_to_ignore']
-    # get the decision attribute along with value
-    decision_attribute = json_dict['decision_attribute']
+    def read(self):
+        if self.f_type == 'csv':
+            return self._read_csv()
+        elif self.f_type == 'json':
+            return self._read_json()
+        else:
+            raise Exception('File type not supported')
 
-    return attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute
+    def _read_csv(self):
+        """
+        Reads the data from the csv file and determines the tuples and
+        attributes. The file should have the attributes in the first row and the
+        tuples in the second row.
+        :return: nothing
+        """
+        self.df = pd.read_csv(self.f_name)
+
+    def _read_json(self):
+        """
+        Reads the attribute types, ordinal attribute values and attributes to ignore
+        from a json file with file name and returns them.
+        :return: nothing
+        """
+        f = open(self.f_name, 'r')  # open file
+        json_dict = json.load(f)  # convert to dict
+
+        # get the attribute types
+        self.attribute_types = json_dict['attribute_types']
+
+        # get ranked values per ordinal attribute
+        self.ordinal_attribute_values = json_dict['ordinal_attribute_values']
+
+        # get attributes to be ignored
+        self.attributes_to_ignore = json_dict['attributes_to_ignore']
+
+        # get the decision attribute along with value
+        self.decision_attribute = json_dict['decision_attribute']
 
 
 def read_data(json_file_name, csv_file_name):
@@ -54,23 +58,33 @@ def read_data(json_file_name, csv_file_name):
     :return: all the return values of the read_csv and read_json functions
     """
     # read the attribute types and ranked values from the json file
-    attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = read_json(
-        json_file_name)
+    r = Read(json_file_name, 'json')
+    r.read()
+    attribute_types = r.attribute_types
+    ordinal_attribute_values = r.ordinal_attribute_values
+    attributes_to_ignore = r.attributes_to_ignore
+    decision_attribute = r.decision_attribute
 
     # read the data from the csv file
-    all_tuples, attributes = read_csv(csv_file_name)
+    r = Read(csv_file_name, 'csv')
+    r.read()
+    all_tuples = r.df
 
-    return all_tuples, attributes, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute
+    return all_tuples, attribute_types, ordinal_attribute_values, \
+        attributes_to_ignore, decision_attribute
 
 
 if __name__ == '__main__':
-    attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = read_json(
-        'german_credit_data.json')
-    print(attribute_types)
-    print(ordinal_attribute_values)
-    print(attributes_to_ignore)
-    print(decision_attribute)
+    r = Read('data/german_credit_data.json', 'json')
+    r.read()
+    print(r.attribute_types)
+    print(r.ordinal_attribute_values)
+    print(r.attributes_to_ignore)
+    print(r.decision_attribute)
 
-    all_tuples, attributes = read_csv('german_credit_data.csv')
+    r = Read('data/german_credit_data.csv', 'csv')
+    r.read()
+    all_tuples = r.df
+    df = make_numeric(all_tuples)
+    print(all_tuples.Age.dtype)
     print(all_tuples)
-    print(attributes)

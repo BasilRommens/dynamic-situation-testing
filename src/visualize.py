@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from collections import Counter
 
 from inout import read_data
-from knn import determine_distances, knn_situation
+from knn import calc_dist_mat, knn_situation
 from dataclasses import dataclass
 from process import process_all
 
@@ -46,7 +46,7 @@ def visualize_tuples(tuples, visualization_param):
     plt.figure(figsize=(7, 4.8))
 
     # plot the results
-    ax = sns.lineplot(x, y)
+    ax = sns.lineplot(x=x, y=y)
 
     # specify labels
     ax.set(xlabel=visualization_param.x_axis, ylabel=visualization_param.y_axis,
@@ -73,29 +73,42 @@ def visualize_data(data, x, y, color):
     plt.show()
 
 
+def visualize_variable_kde(data, var_name, color):
+    """
+    Visualize the heatmap of the data for the variable name passed
+    :param data: the data to visualize
+    :param var_name: the variable name to visualize
+    :return: nothing
+    """
+    sns.kdeplot(data=data, x='x', y='y', weights=var_name, fill=True,
+                alpha=0.1, color=color).set(title=var_name)
+    plt.show()
+
+
 if __name__ == '__main__':
-    df = pd.read_csv("../data/german_credit_data_class.csv")
+    df = pd.read_csv("data/german_credit_data_class.csv")
     visualize_data(df, 'Credit amount', 'Age', 'Class')
     # read the data from the csv and json file
-    all_tuples, attributes, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = read_data(
-        'german_credit_data.json', 'german_credit_data_class.csv')
+    all_tuples, attribute_types, ordinal_attribute_values, \
+        attributes_to_ignore, decision_attribute = read_data(
+        'data/german_credit_data.json', 'data/german_credit_data_class.csv')
 
     # process the data
-    tuples, ranked_values, attributes, decision_attribute = process_all(
-        all_tuples, attributes,
+    tuples, ranked_values, decision_attribute = process_all(
+        all_tuples,
         attribute_types,
         ordinal_attribute_values,
         attributes_to_ignore,
         decision_attribute)
     # determine the distances
     protected_attributes = {"Sex": ["female"]}
-    distance_dict = determine_distances(tuples, ranked_values, attribute_types,
-                                        attributes, decision_attribute,
-                                        protected_attributes)
+    dist_mat = calc_dist_mat(tuples, ranked_values, attribute_types,
+                             decision_attribute,
+                             protected_attributes)
 
     # apply the situation testing algorithm with knn
     k = 32
-    valid_tuples = knn_situation(k, tuples, attributes, distance_dict,
+    valid_tuples = knn_situation(k, tuples, dist_mat,
                                  protected_attributes, decision_attribute)
     # TODO: add some formatting for using the right visualization parameters
     visualization_param = Visualize(
