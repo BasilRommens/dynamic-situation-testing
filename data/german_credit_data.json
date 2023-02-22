@@ -1,0 +1,40 @@
+{
+  "attribute_types": {
+    "Age": "interval",
+    "Sex": "nominal",
+    "Job": "ordinal",
+    "Housing": "nominal",
+    "Saving accounts": "ordinal",
+    "Checking account": "ordinal",
+    "Credit amount": "interval",
+    "Duration": "interval",
+    "Purpose": "nominal",
+    "Class": "interval"
+  },
+  "ordinal_attribute_values": {
+    "Job": {
+      "0": 0,
+      "1": 1,
+      "2": 2,
+      "3": 3
+    },
+    "Saving accounts": {
+      "little": 0,
+      "moderate": 1,
+      "quite rich": 2,
+      "rich": 3
+    },
+    "Checking account": {
+      "little": 0,
+      "moderate": 1,
+      "quite rich": 2,
+      "rich": 3
+    }
+  },
+  "attributes_to_ignore": [
+
+  ],
+  "decision_attribute": {
+    "Class": 0
+  }
+}
