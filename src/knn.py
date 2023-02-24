@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import scipy.spatial as scs
 
@@ -8,13 +10,31 @@ from process import process_all
 
 def calc_dist_mat(tuples, ranked_values, attribute_types,
                   decision_attribute, protected_attributes):
+    attributes = list(tuples.columns)
+    m_dict = dict()
+    s_dict = dict()
+    for idx, attribute in enumerate(attributes):
+        attribute_type = attribute_types[
+            attributes[idx]]  # determine attribute type
+        if attribute_type != 'interval':
+            continue
+
+        all_interval = tuples[attributes[idx]].values
+        m_dict[idx] = np.average(all_interval)
+        s_dict[idx] = np.std(all_interval)
+    decision_attr_idx = attributes.index(list(decision_attribute.keys())[0])
+    protected_attr_idcs = [attributes.index(protected_attribute)
+                           for protected_attribute in
+                           protected_attributes.keys()]
     flat_dist_mat = scs.distance.pdist(tuples.values,
                                        metric=lambda u, v: total_distance(u, v,
                                                                           tuples,
                                                                           attribute_types,
                                                                           ranked_values,
-                                                                          decision_attribute,
-                                                                          protected_attributes))
+                                                                          m_dict,
+                                                                          s_dict,
+                                                                          decision_attr_idx,
+                                                                          protected_attr_idcs))
     dist_mat = scs.distance.squareform(flat_dist_mat)
 
     return dist_mat
@@ -119,9 +139,11 @@ if __name__ == "__main__":
         decision_attribute)
     # determine the distances
     protected_attributes = {"Sex": ["female"]}
+    start = time.time()
     dist_mat = calc_dist_mat(tuples, ranked_values, attribute_types,
-                             decision_attribute,
-                             protected_attributes)
+                             decision_attribute, protected_attributes)
+    end = time.time()
+    print(end - start)
     # write dump
     dist_mat.dump('data/dist_mat.dump')
     # read the same dump
