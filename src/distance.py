@@ -21,8 +21,6 @@ def total_distance(t_1, t_2, all_tuples, attribute_types, ranked_values_per_ord,
     # the sum placed in the numerator for each tuple-value
     summation = 0
 
-    start = time.time()
-
     # go over all tuple values
     for idx, (v_1, v_2) in enumerate(zip(t_1, t_2)):
         # if the attribute is the decision attribute continue
@@ -47,8 +45,6 @@ def total_distance(t_1, t_2, all_tuples, attribute_types, ranked_values_per_ord,
 
     # compute the average distance over all tuple values
     distance = summation / len(t_1)
-    end = time.time()
-    print(f"Total time spent in distance: f{end - start}s")
 
     return distance
 
