@@ -127,23 +127,16 @@ def calc_prop_dec_group(decision_attribute_idx, idx_group, k, tuple,
 
 if __name__ == "__main__":
     # read the data from the csv and json file
-    all_tuples, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = read_data(
-        'data/german_credit_data.json', 'data/german_credit_data_class.csv')
+    r = read_data('data/german_credit_data.json',
+                  'data/german_credit_data_class.csv')
 
     # process the data
-    tuples, ranked_values, decision_attribute = process_all(
-        all_tuples,
-        attribute_types,
-        ordinal_attribute_values,
-        attributes_to_ignore,
-        decision_attribute)
+    tuples, ranked_values, decision_attribute = process_all(r)
     # determine the distances
     protected_attributes = {"Sex": ["female"]}
-    start = time.time()
-    dist_mat = calc_dist_mat(tuples, ranked_values, attribute_types,
-                             decision_attribute, protected_attributes)
-    end = time.time()
-    print(end - start)
+    dist_mat = calc_dist_mat(tuples, ranked_values, r.attribute_types,
+                             decision_attribute,
+                             protected_attributes)
     # write dump
     dist_mat.dump('data/dist_mat.dump')
     # read the same dump

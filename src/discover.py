@@ -22,19 +22,13 @@ def discover_disc_situation(idx_disc_tuples, threshold):
 
 if __name__ == "__main__":
     # read the data from the csv and json file
-    all_tuples, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = read_data(
-        'german_credit_data.json', 'german_credit_data_class.csv')
+    r = read_data('german_credit_data.json', 'german_credit_data_class.csv')
 
     # process the data
-    tuples, ranked_values, decision_attribute = process_all(
-        all_tuples,
-        attribute_types,
-        ordinal_attribute_values,
-        attributes_to_ignore,
-        decision_attribute)
+    tuples, ranked_values, decision_attribute = process_all(r)
     # determine the distances
     protected_attributes = {"Sex": ["male"]}
-    dist_mat = calc_dist_mat(tuples, ranked_values, attribute_types,
+    dist_mat = calc_dist_mat(tuples, ranked_values, r.attribute_types,
                              decision_attribute,
                              protected_attributes)
 

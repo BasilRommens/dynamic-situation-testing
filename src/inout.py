@@ -57,21 +57,17 @@ def read_data(json_file_name, csv_file_name):
     :param csv_file_name: the name of the csv file
     :return: all the return values of the read_csv and read_json functions
     """
-    # read the attribute types and ranked values from the json file
-    r = Read(json_file_name, 'json')
-    r.read()
-    attribute_types = r.attribute_types
-    ordinal_attribute_values = r.ordinal_attribute_values
-    attributes_to_ignore = r.attributes_to_ignore
-    decision_attribute = r.decision_attribute
-
     # read the data from the csv file
     r = Read(csv_file_name, 'csv')
     r.read()
     all_tuples = r.df
 
-    return all_tuples, attribute_types, ordinal_attribute_values, \
-        attributes_to_ignore, decision_attribute
+    # read the attribute types and ranked values from the json file
+    r = Read(json_file_name, 'json')
+    r.read()
+    r.df = all_tuples
+
+    return r
 
 
 if __name__ == '__main__':
@@ -85,6 +81,7 @@ if __name__ == '__main__':
     r = Read('data/german_credit_data.csv', 'csv')
     r.read()
     all_tuples = r.df
+
     df = make_numeric(all_tuples)
     print(all_tuples.Age.dtype)
     print(all_tuples)

@@ -13,7 +13,9 @@ def convert_value(value, attribute, attribute_type, ordinal_attribute_values):
     :return: the converted value
     """
     # if no value is given return None
-    if type(value) == np.float and np.isnan(value):
+    if type(value) == np.cfloat and np.isnan(value):
+        return np.nan
+    if type(value) == float and np.isnan(value):
         return np.nan
 
     # determine the value to return based on the attribute type
@@ -111,21 +113,20 @@ def process_decision_attribute(attribute_types, decision_attribute,
     return {decision_attribute_name: decision_attribute_value}
 
 
-def process_all(all_tuples, attribute_types,
-                ordinal_attribute_values, attributes_to_ignore,
-                decision_attribute):
+def process_all(r):
     """
     process all the tuples, create the ranked values and return attributes that
     aren't ignored
-    :param all_tuples: all the tuples to process
-    :param attributes: their corresponding attributes
-    :param attribute_types: the types of the attributes
-    :param ordinal_attribute_values: the ordinal attribute values
-    :param attributes_to_ignore: the attributes to ignore
-    :param decision_attribute: the decision attribute
+    :param r: read object with all the data to be processed
     :return: the processed tuples, ranked values, attributes and decision
     attribute
     """
+    all_tuples = r.df
+    attribute_types = r.attribute_types
+    ordinal_attribute_values = r.ordinal_attribute_values
+    attributes_to_ignore = r.attributes_to_ignore
+    decision_attribute = r.decision_attribute
+
     # process the tuples
     tuples, attributes = process_tuples(all_tuples, attribute_types,
                                         ordinal_attribute_values,
@@ -141,39 +142,45 @@ def process_all(all_tuples, attribute_types,
     return tuples, ranked_values, decision_attribute
 
 
+def make_numeric(df, string_to_value_dict=dict()):
+    """
+    Converts all the values in numeric values instead of strings
+    :param df: the dataframe containing
+    :param string_to_value_dict: a dictionary containing the attributes that
+    have a numerical value
+    :return: the dataframe with solely numeric values
+    """
+    for col in df.columns:
+        if df[col].dtype != 'object':
+            continue
+
+        # use the dict if the column is an attribute has a numerical value
+        if col in string_to_value_dict.keys():
+            # convert the string attributes to numeric values
+            string_to_value = string_to_value_dict[col]
+            df[col] = df[col].map(string_to_value)
+        else:  # otherwise we just use a label encoder
+            le = preprocessing.LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+    df.fillna(-1, inplace=True)
+
+    # convert all the types of the columns to floats
+    for col in df.columns:
+        df[col] = df[col].astype(np.float64)
+
+    return df
+
+
 if __name__ == "__main__":
     import inout
 
     json_file_name = 'german_credit_data.json'
     csv_file_name = 'german_credit_data_class.csv'
     # open the files
-    all_tuples, attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = inout.read_data(
-        json_file_name, csv_file_name)
+    r = inout.read_data(json_file_name, csv_file_name)
 
     # process the data
-    tuples, ranked_values, decision_attribute = process_all(
-        all_tuples,
-        attribute_types,
-        ordinal_attribute_values,
-        attributes_to_ignore,
-        decision_attribute)
+    tuples, ranked_values, decision_attribute = process_all(r)
     print(tuples)
     print(ranked_values)
     print(decision_attribute)
-
-
-def make_numeric(df):
-    """
-    Converts all the values in numeric values instead of strings
-    :param df: the dataframe containing
-    :return: the dataframe with solely numeric values
-    """
-    for col in df.columns:
-        if df[col].dtype != 'object':
-            continue
-        le = preprocessing.LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-    # convert all the types of the columns to floats
-    for col in df.columns:
-        df[col] = df[col].astype(np.float64)
-    return df

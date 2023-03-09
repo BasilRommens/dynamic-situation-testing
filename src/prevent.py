@@ -7,7 +7,7 @@ from process import process_all
 
 
 def prevent_situation(tuples, discriminated_tuples, decision_attribute,
-                       decision_attr_type=None):
+                      decision_attr_type=None):
     attributes = list(tuples.columns)
     decision_attribute_name = list(decision_attribute.keys())[0]
     decision_attribute_idx = attributes.index(decision_attribute_name)
@@ -34,25 +34,19 @@ def prevent_situation(tuples, discriminated_tuples, decision_attribute,
 
 if __name__ == "__main__":
     # read the data from the csv and json file
-    all_tuples,  attribute_types, ordinal_attribute_values, attributes_to_ignore, decision_attribute = read_data(
-        'german_credit_data.json', 'german_credit_data_class.csv')
+    r = read_data('german_credit_data.json', 'german_credit_data_class.csv')
 
     # process the data
-    tuples, ranked_values,  decision_attribute = process_all(
-        all_tuples,
-        attribute_types,
-        ordinal_attribute_values,
-        attributes_to_ignore,
-        decision_attribute)
+    tuples, ranked_values, decision_attribute = process_all(r)
     # determine the distances
     protected_attributes = {"Sex": ["male"]}
-    dist_mat = calc_dist_mat(tuples, ranked_values, attribute_types,
+    dist_mat = calc_dist_mat(tuples, ranked_values, r.attribute_types,
                              decision_attribute,
                              protected_attributes)
 
     # apply the situation testing algorithm with knn
     k = 16
-    valid_tuples = knn_situation(k, tuples,  dist_mat,
+    valid_tuples = knn_situation(k, tuples, dist_mat,
                                  protected_attributes, decision_attribute)
 
     # discover the discriminated tuples among the valid tuples

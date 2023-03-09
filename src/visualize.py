@@ -89,22 +89,14 @@ if __name__ == '__main__':
     df = pd.read_csv("data/german_credit_data_class.csv")
     visualize_data(df, 'Credit amount', 'Age', 'Class')
     # read the data from the csv and json file
-    all_tuples, attribute_types, ordinal_attribute_values, \
-        attributes_to_ignore, decision_attribute = read_data(
-        'data/german_credit_data.json', 'data/german_credit_data_class.csv')
+    r = read_data('data/german_credit_data.json', 'data/german_credit_data_class.csv')
 
     # process the data
-    tuples, ranked_values, decision_attribute = process_all(
-        all_tuples,
-        attribute_types,
-        ordinal_attribute_values,
-        attributes_to_ignore,
-        decision_attribute)
+    tuples, ranked_values, decision_attribute = process_all(r)
     # determine the distances
     protected_attributes = {"Sex": ["female"]}
-    dist_mat = calc_dist_mat(tuples, ranked_values, attribute_types,
-                             decision_attribute,
-                             protected_attributes)
+    dist_mat = calc_dist_mat(tuples, ranked_values, r.attribute_types,
+                             decision_attribute, protected_attributes)
 
     # apply the situation testing algorithm with knn
     k = 32
