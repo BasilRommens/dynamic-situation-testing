@@ -85,6 +85,16 @@ def visualize_variable_kde(data, var_name, color):
     plt.show()
 
 
+def visualize_kde(arr):
+    """
+    visualizes an array in the form of a kde plot
+    :param arr: a 1d array containing numeric values
+    :return: nothing
+    """
+    sns.kdeplot(data=arr, fill=True).set(title="kde plot")
+    plt.show()
+
+
 if __name__ == '__main__':
     df = pd.read_csv("data/german_credit_data_class.csv")
     visualize_data(df, 'Credit amount', 'Age', 'Class')
