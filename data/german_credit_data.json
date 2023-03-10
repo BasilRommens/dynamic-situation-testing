@@ -32,7 +32,6 @@
     }
   },
   "attributes_to_ignore": [
-    "idx"
   ],
   "decision_attribute": {
     "Class": 0

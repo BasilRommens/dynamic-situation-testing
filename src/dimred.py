@@ -124,18 +124,18 @@ def calc_bw_weights(data_pts, bw):
 
 
 if __name__ == '__main__':
-    # # german credit dataset
-    # path = 'data/'
-    # json_fname = 'german_credit_data.json'
-    # csv_fname = 'german_credit_data_class.csv'
-    # protected_attributes = {"Sex": ["female"]}
-    # ignore_cols = ['Class', 'Sex']
-    # adult dataset
+    # german credit dataset
     path = 'data/'
-    json_fname = 'adult.json'
-    csv_fname = 'adult.csv'
-    protected_attributes = {"sex": ["female"]}
-    ignore_cols = ['class', 'sex']
+    json_fname = 'german_credit_data.json'
+    csv_fname = 'german_credit_data_class.csv'
+    protected_attributes = {"Sex": ["female"]}
+    ignore_cols = ['Class', 'Sex']
+    # # adult dataset
+    # path = 'data/'
+    # json_fname = 'adult.json'
+    # csv_fname = 'adult.csv'
+    # protected_attributes = {"sex": ["female"]}
+    # ignore_cols = ['class', 'sex']
 
     # read the data from the csv and json file
     r = read_data(path + json_fname, path + csv_fname)
@@ -180,9 +180,9 @@ if __name__ == '__main__':
                        {'Credit amount': (8000, 20_000), 'Job': (2, 3)}]
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew-open',
-                  'neutral': 'y-right-open',
+                  'neutral': 'circle',
                   'positive discrimination': 'cross-thin-open',
-                  'sensitive': 'y-right-open'}
+                  'sensitive': 'circle'}
 
     # # auto mpg data set
     # ignore_cols = ['displacement']
