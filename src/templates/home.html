@@ -9,6 +9,8 @@
             integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
             crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css">
+    <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
 
     <title>Home</title>
     <style>
@@ -33,6 +35,15 @@
             border: solid 3px black;
             width: 400px;
             height: 400px;
+        }
+
+        .toggle {
+            display: none;
+        }
+
+        a {
+            color: blue;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -67,27 +78,60 @@
 {% block body %}
 
 
-<div class="container-fluid position-absolute top-50 start-50 translate-middle">
+<div class="container-fluid">
     <div class="row">
-        <div class="col text-center">
-            <a type="button" class="btn btn-primary" href="{{ url_for('discriminate') }}"><b>Discover Example</b></a>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col text-center m-2">
-            <b>or</b>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col text-center">
-            <a type="button" class="btn btn-secondary" href="{{ url_for('upload') }}"><b>Upload Dataset</b></a>
+        <div class="col">
+            <table class="table table-striped" data-toggle="table" data-search="true">
+                <thead>
+                <tr>
+                    <th scope="col" data-sortable="true">Toggle</th>
+                    {% for header in headers %}
+                    <th scope="col" data-sortable="true">{{ header }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for item, unprot, prot in items %}
+                {% set count = loop.index %}
+                <tr>
+                    <td><a onclick="fun({{ count }})">open</a></td>
+                    {% for value in item %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+
+                {% for unprot_val in unprot %}
+                <tr class="t{{ count }} toggle">
+                    <td></td>
+                    {% for value in unprot_val %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+                {% for prot_val in prot %}
+                <tr class="t{{ count }} toggle">
+                    <td></td>
+                    {% for value in prot_val %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 {% endblock %}
 
-
+<script>
+    function fun(id) {
+        $(".t" + id).toggle();
+    }
+</script>
 </body>
 
 </html>
