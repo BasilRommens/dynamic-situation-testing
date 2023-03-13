@@ -2,10 +2,13 @@ import time
 
 import numpy as np
 import scipy.spatial as scs
+import scipy.stats
 
 from distance import total_distance
 from inout import read_data
 from process import process_all
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def calc_dist_mat(tuples, ranked_values, attribute_types,
@@ -94,10 +97,12 @@ def knn_situation(k, tuples, dist_mat, protected_attributes,
         if tuple[decision_attribute_idx] != decision_attribute_value:
             continue
 
-        _diff = diff(decision_attribute_idx, dist_mat, idx, k,
-                     protected_tuple_idxs, tuple, tuples,
-                     unprotected_tuple_idxs)
-        valid_tuples.append((idx, _diff))
+        _diff, idx_group_prot, idx_group_unprot = diff(decision_attribute_idx,
+                                                       dist_mat, idx, k,
+                                                       protected_tuple_idxs,
+                                                       tuple, tuples,
+                                                       unprotected_tuple_idxs)
+        valid_tuples.append((idx, _diff, idx_group_prot, idx_group_unprot))
     return valid_tuples
 
 
@@ -114,7 +119,7 @@ def diff(decision_attribute_idx, dist_mat, idx, k, protected_tuple_idxs,
     p_2 = calc_prop_dec_group(decision_attribute_idx, idx_group_unprot,
                               k, tuple, tuples)
     _diff = p_1 - p_2
-    return _diff
+    return _diff, idx_group_prot, idx_group_unprot
 
 
 def calc_prop_dec_group(decision_attribute_idx, idx_group, k, tuple,
@@ -144,6 +149,8 @@ if __name__ == "__main__":
 
     # apply the situation testing algorithm with knn
     k = 4
-    valid_tuples = knn_situation(k, tuples, dist_mat,
-                                 protected_attributes, decision_attribute)
+    valid_tuples = knn_situation(k, tuples, dist_mat, protected_attributes,
+                                 decision_attribute)
     print(valid_tuples)
+    sns.kdeplot()
+    plt.show()
