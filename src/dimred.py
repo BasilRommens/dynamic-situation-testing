@@ -276,7 +276,7 @@ if __name__ == '__main__':
 
     # combine the two scatter plots
     scatter_final = dynamic.combine_plots(scatter_data, scatter_feature)
-    scatter_final = dynamic.combine_plots(scatter_final, scatter_sensitive)
+    scatter_final = dynamic.combine_plots(scatter_sensitive, scatter_final)
 
     # create the segments using seaborn and translate to plotly
     init_segment = go.Figure()
