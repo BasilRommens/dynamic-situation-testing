@@ -17,6 +17,7 @@ app = Flask(__name__, template_folder='templates')
 # the associated function.
 @app.route('/')
 def home():
+    global valid_tuples
     headers = sorted(list(tuples.columns))
     headers.insert(0, 'Score')
 
