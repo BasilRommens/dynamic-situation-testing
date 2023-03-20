@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT"
+          crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
+            crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <link rel="stylesheet"
+          href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css">
+    <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
+
+    <title>Home</title>
+    <style>
+        body {
+            background-image: url('static/grey.jpg');
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center;
+        }
+
+        #buttonContainer {
+            /* make element inline flex-container */
+            /* this will make its children flex-items */
+            display: inline-flex;
+            /* align-items items in column */
+            flex-direction: column;
+            /* center items horizontally */
+            align-items: center;
+            /* center items vertically */
+            justify-content: center;
+
+            border: solid 3px black;
+            width: 400px;
+            height: 400px;
+        }
+
+        .toggle {
+            display: none;
+        }
+
+        a {
+            color: blue;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+{% include 'navbar.html' %}
+
+<!-- this section can be replaced by a child document -->
+{% block body %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-6">
+                <form action="{{ url_for('dynamic_post') }}" method="POST">
+                    <!--k nearest neighbors-->
+                    <div class="form-group">
+                        <label for="k">k</label>
+                        <input name="k" type="number" class="form-control"
+                               id="k"
+                               placeholder="2">
+                    </div>
+
+                    <!--sensitive attribute-->
+                    <div id="sensitiveAttr">
+                        <div class="form-group" id="sensitiveAttrVarField">
+                            <label for="sensitiveAttrVar">
+                                Sensitive Attribute Variable
+                            </label>
+                            <select name="sensitiveAttrVar" class="form-control"
+                                    id="sensitiveAttrVar">
+                                {% for attr in attrs %}
+                                    <option>{{ attr }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group" id="sensitiveAttrValField">
+                            <label for="sensitiveAttrVal">Sensitive Attribute
+                                Value</label>
+                            <input type="text" class="form-control"
+                                   name="sensitiveAttrVal"
+                                   id="sensitiveAttrVal">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-success mt-2"
+                            onclick="addSensitiveAttr()">
+                        Add Sensitive Attribute
+                    </button>
+
+                    <!--decision attribute-->
+                    <div class="form-group">
+                        <label for="decisionAttrVar">Decision Attribute
+                            Variable</label>
+                        <select name="decisionAttrVar" class="form-control"
+                                id="decisionAttrVar">
+                            {% for attr in attrs %}
+                                <option>{{ attr }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="decisionAttrVal">Decision Attribute
+                            Value</label>
+                        <input name="decisionAttrVal" type="text"
+                               class="form-control" id="decisionAttrVal">
+                    </div>
+
+                    <!--ignore attribute-->
+                    <div class="form-group">
+                        <label for="ignoreAttr">Ignore Attributes</label>
+                        <select name="ignoreAttr" class="form-control"
+                                id="ignoreAttr" multiple>
+                            {% for attr in attrs %}
+                                <option>{{ attr }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!--submission button-->
+                    <input type="submit" class="btn btn-primary my-2"
+                           value="Submit">
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+<script>
+    function fun(id) {
+        $(".t" + id).toggle();
+    }
+
+    let numSensitiveAttrFields = 1;
+
+    function addSensitiveAttr() {
+        // add sensitive attribute fields to the form
+        numSensitiveAttrFields += 1;
+
+        // set a unique id for the sensitive attribute fields
+        // add a clone of the sensitive attribute variables field
+        let newVarNode = document.getElementById("sensitiveAttrVarField").cloneNode(true);
+        newVarNode.id = "sensitiveAttrVarField" + numSensitiveAttrFields;
+        newVarNode.childNodes[1].setAttribute("for", "sensitiveAttrVar" + numSensitiveAttrFields);
+        newVarNode.childNodes[1].innerHTML = "Sensitive Attribute Variable " + numSensitiveAttrFields;
+        newVarNode.childNodes[3].id = "sensitiveAttrVar" + numSensitiveAttrFields;
+        newVarNode.childNodes[3].name = "sensitiveAttrVar" + numSensitiveAttrFields;
+        document.getElementById("sensitiveAttr").appendChild(newVarNode);
+
+        // add a clone of the sensitive attribute values field
+        let newValNode = document.getElementById("sensitiveAttrValField").cloneNode(true);
+        newValNode.id = "sensitiveAttrValField" + numSensitiveAttrFields;
+        newValNode.childNodes[1].setAttribute("for", "sensitiveAttrVal" + numSensitiveAttrFields);
+        newValNode.childNodes[1].innerHTML = "Sensitive Attribute Value " + numSensitiveAttrFields;
+        newValNode.childNodes[3].id = "sensitiveAttrVal" + numSensitiveAttrFields;
+        newValNode.childNodes[3].name = "sensitiveAttrVal" + numSensitiveAttrFields;
+        console.log(newValNode.childNodes);
+        document.getElementById("sensitiveAttr").appendChild(newValNode);
+    }
+</script>
+</body>
+
+</html>
