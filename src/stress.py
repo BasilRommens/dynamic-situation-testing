@@ -43,3 +43,23 @@ def total_stress(og_mat, dimred_mat, width_DD_mat, height_DD_mat, beta_DD=1 / 7,
     print(f'{E_A=}')
 
     return E_DD, E_VD, E_DV, E_VV, E_A
+
+
+def total_knn_stress(og_mat, dimred_mat, width_DD_mat, height_DD_mat, knn_els,
+                     beta_DD=1 / 7, beta_VV=4 / 7, beta_DV=1 / 7,
+                     beta_VD=1 / 7):
+    # filter out the elements in both the original matrix and the dimred matrix
+    # that are not in the knn
+    # filter matrix of DD matrix dimensions
+    filter_mat = np.zeros((height_DD_mat, width_DD_mat))
+    for row, col in knn_els:
+        filter_mat[row, col] = 1
+
+    # filter out the elements in both the original matrix and the dimred matrix
+    og_mat[:height_DD_mat, :width_DD_mat] = og_mat[:height_DD_mat,
+                                            :width_DD_mat] * filter_mat
+    dimred_mat[:height_DD_mat, :width_DD_mat] = dimred_mat[:height_DD_mat,
+                                                :width_DD_mat] * filter_mat
+
+    return total_stress(og_mat, dimred_mat, width_DD_mat, height_DD_mat,
+                        beta_DD, beta_VV, beta_DV, beta_VD)

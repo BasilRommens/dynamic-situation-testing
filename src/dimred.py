@@ -1,3 +1,5 @@
+import itertools
+
 import plotly.graph_objects as go
 import seaborn as sns
 import networkx as nx
@@ -16,7 +18,7 @@ from inout import read_data
 from knn import calc_dist_mat, knn_situation
 from matrix import Matrix
 from process import make_numeric, process_all
-from stress import total_stress
+from stress import total_stress, total_knn_stress
 from tuples import get_tuple_discrimination_type, get_tuples_with_attr
 from visualize import visualize_kde
 from viz import dynamic
@@ -232,6 +234,14 @@ if __name__ == '__main__':
 
     # determine the total stress of the distance matrices
     total_stress(dist_mat, sq_mat, n_d_pts, n_d_pts)
+    # determine the total knn stress of the distance matrices
+    knn_els = list()
+    for valid_tuple in valid_tuples:
+        prot_knn = list(itertools.product([valid_tuple[0]], dict(valid_tuple[2]).keys()))
+        unprot_knn = list(itertools.product([valid_tuple[0]], dict(valid_tuple[3]).keys()))
+        knn_els += prot_knn + unprot_knn
+    # calculate the total knn stress
+    total_knn_stress(dist_mat, sq_mat, n_d_pts, n_d_pts, knn_els)
 
     n_feat = sq_mat.shape[0] - n_d_pts
 
