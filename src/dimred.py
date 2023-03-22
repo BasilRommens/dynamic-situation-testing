@@ -7,6 +7,7 @@ import os
 import scipy.spatial as scs
 import numpy as np
 import pandas as pd
+from dash import Dash, html, dcc, Output, Input, no_update
 from sklearn.manifold import MDS, TSNE
 import matplotlib.pyplot as plt
 import time
@@ -237,8 +238,10 @@ if __name__ == '__main__':
     # determine the total knn stress of the distance matrices
     knn_els = list()
     for valid_tuple in valid_tuples:
-        prot_knn = list(itertools.product([valid_tuple[0]], dict(valid_tuple[2]).keys()))
-        unprot_knn = list(itertools.product([valid_tuple[0]], dict(valid_tuple[3]).keys()))
+        prot_knn = list(
+            itertools.product([valid_tuple[0]], dict(valid_tuple[2]).keys()))
+        unprot_knn = list(
+            itertools.product([valid_tuple[0]], dict(valid_tuple[3]).keys()))
         knn_els += prot_knn + unprot_knn
     # calculate the total knn stress
     total_knn_stress(dist_mat, sq_mat, n_d_pts, n_d_pts, knn_els)
@@ -289,7 +292,7 @@ if __name__ == '__main__':
     scatter_final = dynamic.combine_plots(scatter_sensitive, scatter_final)
 
     # create the segments using seaborn and translate to plotly
-    init_segment = go.Figure()
+    init_segment = go.FigureWidget()
     # bw_weigths = calc_bw_weights(data_pts.values, 1)
     for i, segment_dict in enumerate(segment_dict_ls):
         # create the name of the segment
@@ -307,4 +310,161 @@ if __name__ == '__main__':
 
     # set the theme of the plot
     scatter_final = dynamic.set_theme(scatter_final, 'plotly_white')
-    scatter_final.show()
+    fig = scatter_final
+
+
+    def draw_knn_lines(trace, points, selector):
+        print(trace, points, selector)
+
+
+    fig2 = fig.data[0]
+
+
+    def update_point(trace, points, selector):
+        print("yeet")
+        c = list(fig2.marker.color)
+        s = list(fig2.marker.size)
+        for i in points.point_inds:
+            c[i] = '#bae2be'
+            s[i] = 20
+            with fig2.batch_update():
+                fig2.marker.color = c
+                fig2.marker.size = s
+
+
+    fig2.on_click(update_point)
+
+    app = Dash(__name__)
+
+    app.layout = html.Div(
+        children=[
+            dcc.Graph(
+                id="graph",
+                figure=fig,
+                clear_on_unhover=True,
+                style={'width': '100%', 'height': '100vh',
+                       'display': 'inline-block'})
+        ]
+    )
+
+    click_shapes = list()
+
+
+    @app.callback(
+        Output("graph", "figure", allow_duplicate=True),
+        Input("graph", "clickData"),
+        prevent_initial_call=True
+    )
+    def update_click(clickData):
+        global click_shapes
+
+        if clickData is None:
+            return no_update
+
+        pt = clickData["points"][0]
+        if 'hovertext' not in pt.keys():
+            return no_update
+
+        pt_coords = pt['x'], pt['y']
+        pt_idx = data_pts[(data_pts['x'] == pt_coords[0]) & (
+                data_pts['y'] == pt_coords[1])].index[0]
+
+        # find all the neighbors of the point, both protected and unprotected
+        prot_pts = list()
+        unprot_pts = list()
+        for valid_tuple in valid_tuples:
+            if valid_tuple[0] == pt_idx:
+                prot_pts = list(dict(valid_tuple[2]).keys())
+                unprot_pts = list(dict(valid_tuple[3]).keys())
+
+        # if the point isn't a sensitive tuple, return the figure
+        if not len(prot_pts) and not len(unprot_pts):
+            return no_update
+
+        # clear all the line shapes
+        fig['layout']['shapes'] = list()
+        # find the coordinates of the protected points
+        get_coords = lambda x: data_pts.iloc[x][['x', 'y']].values
+        prot_coords = list(map(get_coords, prot_pts))
+        unprot_coords = list(map(get_coords, unprot_pts))
+
+        # create the protected lines
+        temp_fig = go.Figure()
+        for prot_coord in prot_coords:
+            temp_fig.add_shape(type="line",
+                          x0=pt_coords[0], y0=pt_coords[1],
+                          x1=prot_coord[0], y1=prot_coord[1],
+                          line=dict(width=1, color='red'))
+        # create the unprotected lines
+        for unprot_coord in unprot_coords:
+            temp_fig.add_shape(type="line",
+                          x0=pt_coords[0], y0=pt_coords[1],
+                          x1=unprot_coord[0], y1=unprot_coord[1],
+                          line=dict(width=1, color='green'))
+
+        # add the lines to the figure
+        fig['layout']['shapes'] = temp_fig['layout']['shapes']
+        # add the lines to the figure
+        click_shapes = temp_fig['layout']['shapes']
+        # current index of the point
+        current_idx = pt_idx
+
+        return fig
+
+
+    @app.callback(
+        Output("graph", "figure"),
+        Input("graph", "hoverData"),
+    )
+    def update_hover(hoverData):
+        global click_shapes
+
+        # clear all the line shapes, apart from the ones created by clicking
+        fig['layout']['shapes'] = click_shapes
+
+        if hoverData is None:
+            return fig
+
+        pt = hoverData["points"][0]
+        if 'hovertext' not in pt.keys():
+            return fig
+
+
+        pt_coords = pt['x'], pt['y']
+        pt_idx = data_pts[(data_pts['x'] == pt_coords[0]) & (
+                data_pts['y'] == pt_coords[1])].index[0]
+
+        # find all the neighbors of the point, both protected and unprotected
+        prot_pts = list()
+        unprot_pts = list()
+        for valid_tuple in valid_tuples:
+            if valid_tuple[0] == pt_idx:
+                prot_pts = list(dict(valid_tuple[2]).keys())
+                unprot_pts = list(dict(valid_tuple[3]).keys())
+
+        # if the point isn't a sensitive tuple, return the figure
+        if not len(prot_pts) and not len(unprot_pts):
+            return fig
+
+        # find the coordinates of the protected points
+        get_coords = lambda x: data_pts.iloc[x][['x', 'y']].values
+        prot_coords = list(map(get_coords, prot_pts))
+        unprot_coords = list(map(get_coords, unprot_pts))
+
+        # create the protected lines
+        for prot_coord in prot_coords:
+            fig.add_shape(type="line",
+                          x0=pt_coords[0], y0=pt_coords[1],
+                          x1=prot_coord[0], y1=prot_coord[1],
+                          line=dict(width=1, color='rgb(256, 170, 170)'))
+        # create the unprotected lines
+        for unprot_coord in unprot_coords:
+            fig.add_shape(type="line",
+                          x0=pt_coords[0], y0=pt_coords[1],
+                          x1=unprot_coord[0], y1=unprot_coord[1],
+                          line=dict(width=1, color='rgb(170, 256, 170)'))
+
+        return fig
+
+
+    app.run_server(debug=True)
