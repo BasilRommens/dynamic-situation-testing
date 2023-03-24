@@ -5,5 +5,5 @@ Flask~=2.2.2
 jinja2
 networkx~=3.0
 plotly
-dash
+dash>=2.9
 ipywidgets>=7.0.0

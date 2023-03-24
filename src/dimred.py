@@ -7,7 +7,7 @@ import os
 import scipy.spatial as scs
 import numpy as np
 import pandas as pd
-from dash import Dash, html, dcc, Output, Input, no_update
+from dash import Dash, html, dcc, Output, Input, no_update, State
 from sklearn.manifold import MDS, TSNE
 import matplotlib.pyplot as plt
 import time
@@ -179,8 +179,7 @@ if __name__ == '__main__':
                     class_col]
     df = df.drop(columns=ignore_cols)
     # bounds for different columns
-    segment_dict_ls = [{'Duration': (40, 100)},
-                       {'Credit amount': (8000, 20_000), 'Job': (2, 3)}]
+    segment_dict_ls = [{'Credit amount': (6000, 20_000)}]
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew-open',
                   'neutral': 'circle',
@@ -311,17 +310,15 @@ if __name__ == '__main__':
     # set the theme of the plot
     scatter_final = dynamic.set_theme(scatter_final, 'plotly_white')
     fig = scatter_final
+    fig.for_each_trace(lambda trace: trace.update(visible=False))
 
 
-    def draw_knn_lines(trace, points, selector):
-        print(trace, points, selector)
 
 
     fig2 = fig.data[0]
 
 
     def update_point(trace, points, selector):
-        print("yeet")
         c = list(fig2.marker.color)
         s = list(fig2.marker.size)
         for i in points.point_inds:
@@ -332,7 +329,6 @@ if __name__ == '__main__':
                 fig2.marker.size = s
 
 
-    fig2.on_click(update_point)
 
     app = Dash(__name__)
 
@@ -343,7 +339,9 @@ if __name__ == '__main__':
                 figure=fig,
                 clear_on_unhover=True,
                 style={'width': '100%', 'height': '100vh',
-                       'display': 'inline-block'})
+                       'display': 'inline-block'}),
+            dcc.Store(id='graph_store_layout'),
+            dcc.Store(id='graph_store_style')
         ]
     )
 
@@ -351,12 +349,53 @@ if __name__ == '__main__':
 
 
     @app.callback(
+        Output('graph_store_style', 'data'),
+        Input('graph', 'restyleData')
+    )
+    def update_restyle_store(restyle_data, graph_store):
+        # TODO this needs to be a bit more advanced
+        return restyle_data
+
+
+    @app.callback(
+        Output('graph_store_layout', 'data'),
+        [Input('graph', 'relayoutData'),
+         Input('graph_store_layout', 'data')]
+    )
+    def update_layout_store(relayout_data, graph_store):
+        # TODO fix zoomlevel when reset
+        if graph_store is None:
+            return relayout_data
+        else:
+            graph_store.update(relayout_data)
+            return graph_store
+
+
+    @app.callback(
         Output("graph", "figure", allow_duplicate=True),
         Input("graph", "clickData"),
+        [State("graph_store_layout", "data"),
+         State("graph_store_style", "data")],
         prevent_initial_call=True
     )
-    def update_click(clickData):
+    def update_click(clickData, graph_store_layout, graph_store_style):
         global click_shapes
+
+        # keep the zoom level and everything when hovering using graph_store
+        if graph_store_layout:
+            for axis_name in ['axis', 'axis2']:
+                if f'x{axis_name}.range[0]' in graph_store_layout:
+                    fig['layout'][f'x{axis_name}']['range'] = [
+                        graph_store_layout[f'x{axis_name}.range[0]'],
+                        graph_store_layout[f'x{axis_name}.range[1]']
+                    ]
+                if f'y{axis_name}.range[0]' in graph_store_layout:
+                    fig['layout'][f'y{axis_name}']['range'] = [
+                        graph_store_layout[f'y{axis_name}.range[0]'],
+                        graph_store_layout[f'y{axis_name}.range[1]']
+                    ]
+        if graph_store_style:
+            pass
 
         if clickData is None:
             return no_update
@@ -392,15 +431,15 @@ if __name__ == '__main__':
         temp_fig = go.Figure()
         for prot_coord in prot_coords:
             temp_fig.add_shape(type="line",
-                          x0=pt_coords[0], y0=pt_coords[1],
-                          x1=prot_coord[0], y1=prot_coord[1],
-                          line=dict(width=1, color='red'))
+                               x0=pt_coords[0], y0=pt_coords[1],
+                               x1=prot_coord[0], y1=prot_coord[1],
+                               line=dict(width=1, color='red'))
         # create the unprotected lines
         for unprot_coord in unprot_coords:
             temp_fig.add_shape(type="line",
-                          x0=pt_coords[0], y0=pt_coords[1],
-                          x1=unprot_coord[0], y1=unprot_coord[1],
-                          line=dict(width=1, color='green'))
+                               x0=pt_coords[0], y0=pt_coords[1],
+                               x1=unprot_coord[0], y1=unprot_coord[1],
+                               line=dict(width=1, color='green'))
 
         # add the lines to the figure
         fig['layout']['shapes'] = temp_fig['layout']['shapes']
@@ -415,12 +454,33 @@ if __name__ == '__main__':
     @app.callback(
         Output("graph", "figure"),
         Input("graph", "hoverData"),
+        [State("graph_store_layout", "data"),
+         State("graph_store_style", "data")],
     )
-    def update_hover(hoverData):
+    def update_hover(hoverData, graph_store_layout, graph_store_style):
         global click_shapes
 
         # clear all the line shapes, apart from the ones created by clicking
         fig['layout']['shapes'] = click_shapes
+
+        # keep the zoom level and everything when hovering using graph_store
+        if graph_store_layout:
+            for axis_name in ['axis', 'axis2']:
+                if f'x{axis_name}.range[0]' in graph_store_layout:
+                    fig['layout'][f'x{axis_name}']['range'] = [
+                        graph_store_layout[f'x{axis_name}.range[0]'],
+                        graph_store_layout[f'x{axis_name}.range[1]']
+                    ]
+                if f'y{axis_name}.range[0]' in graph_store_layout:
+                    fig['layout'][f'y{axis_name}']['range'] = [
+                        graph_store_layout[f'y{axis_name}.range[0]'],
+                        graph_store_layout[f'y{axis_name}.range[1]']
+                    ]
+        fig.for_each_trace(lambda trace: print(trace))
+        print('yeet')
+
+        if graph_store_style:
+            pass
 
         if hoverData is None:
             return fig
@@ -428,7 +488,6 @@ if __name__ == '__main__':
         pt = hoverData["points"][0]
         if 'hovertext' not in pt.keys():
             return fig
-
 
         pt_coords = pt['x'], pt['y']
         pt_idx = data_pts[(data_pts['x'] == pt_coords[0]) & (
