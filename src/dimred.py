@@ -310,10 +310,6 @@ if __name__ == '__main__':
     # set the theme of the plot
     scatter_final = dynamic.set_theme(scatter_final, 'plotly_white')
     fig = scatter_final
-    fig.for_each_trace(lambda trace: trace.update(visible=False))
-
-
-
 
     fig2 = fig.data[0]
 
@@ -327,7 +323,6 @@ if __name__ == '__main__':
             with fig2.batch_update():
                 fig2.marker.color = c
                 fig2.marker.size = s
-
 
 
     app = Dash(__name__)
@@ -352,8 +347,7 @@ if __name__ == '__main__':
         Output('graph_store_style', 'data'),
         Input('graph', 'restyleData')
     )
-    def update_restyle_store(restyle_data, graph_store):
-        # TODO this needs to be a bit more advanced
+    def update_restyle_store(restyle_data):
         return restyle_data
 
 
@@ -364,38 +358,23 @@ if __name__ == '__main__':
     )
     def update_layout_store(relayout_data, graph_store):
         # TODO fix zoomlevel when reset
+        print(relayout_data)
         if graph_store is None:
             return relayout_data
-        else:
+        elif 'yaxis.autorange' not in relayout_data:
             graph_store.update(relayout_data)
             return graph_store
+        else:
+            return relayout_data
 
 
     @app.callback(
         Output("graph", "figure", allow_duplicate=True),
         Input("graph", "clickData"),
-        [State("graph_store_layout", "data"),
-         State("graph_store_style", "data")],
         prevent_initial_call=True
     )
-    def update_click(clickData, graph_store_layout, graph_store_style):
+    def update_click(clickData):
         global click_shapes
-
-        # keep the zoom level and everything when hovering using graph_store
-        if graph_store_layout:
-            for axis_name in ['axis', 'axis2']:
-                if f'x{axis_name}.range[0]' in graph_store_layout:
-                    fig['layout'][f'x{axis_name}']['range'] = [
-                        graph_store_layout[f'x{axis_name}.range[0]'],
-                        graph_store_layout[f'x{axis_name}.range[1]']
-                    ]
-                if f'y{axis_name}.range[0]' in graph_store_layout:
-                    fig['layout'][f'y{axis_name}']['range'] = [
-                        graph_store_layout[f'y{axis_name}.range[0]'],
-                        graph_store_layout[f'y{axis_name}.range[1]']
-                    ]
-        if graph_store_style:
-            pass
 
         if clickData is None:
             return no_update
@@ -445,8 +424,6 @@ if __name__ == '__main__':
         fig['layout']['shapes'] = temp_fig['layout']['shapes']
         # add the lines to the figure
         click_shapes = temp_fig['layout']['shapes']
-        # current index of the point
-        current_idx = pt_idx
 
         return fig
 
@@ -465,6 +442,11 @@ if __name__ == '__main__':
 
         # keep the zoom level and everything when hovering using graph_store
         if graph_store_layout:
+            if 'xaxis.autorange' in graph_store_layout:
+                fig['layout']['xaxis']['autorange'] = True
+            if 'yaxis.autorange' in graph_store_layout:
+                fig['layout']['yaxis']['autorange'] = True
+
             for axis_name in ['axis', 'axis2']:
                 if f'x{axis_name}.range[0]' in graph_store_layout:
                     fig['layout'][f'x{axis_name}']['range'] = [
@@ -476,11 +458,12 @@ if __name__ == '__main__':
                         graph_store_layout[f'y{axis_name}.range[0]'],
                         graph_store_layout[f'y{axis_name}.range[1]']
                     ]
-        fig.for_each_trace(lambda trace: print(trace))
-        print('yeet')
 
+        # keep hidden traces hidden and show traces that weren't hidden
         if graph_store_style:
-            pass
+            for idx, trace_idx in enumerate(graph_store_style[1]):
+                fig.data[trace_idx].update(
+                    visible=graph_store_style[0]['visible'][idx])
 
         if hoverData is None:
             return fig
