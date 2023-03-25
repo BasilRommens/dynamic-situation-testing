@@ -14,29 +14,6 @@
 
     <title>Home</title>
     <style>
-        body {
-            background-image: url('static/grey.jpg');
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-position: center;
-        }
-
-        #buttonContainer {
-            /* make element inline flex-container */
-            /* this will make its children flex-items */
-            display: inline-flex;
-            /* align-items items in column */
-            flex-direction: column;
-            /* center items horizontally */
-            align-items: center;
-            /* center items vertically */
-            justify-content: center;
-
-            border: solid 3px black;
-            width: 400px;
-            height: 400px;
-        }
-
         .toggle {
             display: none;
         }
@@ -58,7 +35,7 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col">
+        <div class="col align-self-center">
             <table class="table table-striped" data-toggle="table" data-search="true">
                 <thead>
                 <tr>

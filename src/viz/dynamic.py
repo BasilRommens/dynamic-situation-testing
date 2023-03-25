@@ -1,4 +1,3 @@
-import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
 
@@ -19,7 +18,7 @@ def scatter_plot(data, hover_data=None, text=None, size=None,
     if symbol is not None:
         symbol = [symbol_map[k] for k in symbol]
 
-    fig = go.Figure()
+    fig = go.FigureWidget()
     new_scatter = go.Scatter(x=data['x'], y=data['y'], mode='markers+text',
                              hoverinfo='text', hovertext=hover_data,
                              text=text, textposition=text_position,
@@ -27,13 +26,6 @@ def scatter_plot(data, hover_data=None, text=None, size=None,
                              marker=dict(color=color, symbol=symbol, size=size,
                                          line=dict(width=width)))
     fig.add_trace(new_scatter)
-
-    # layout = go.Layout(title='Random Scatter Plot',
-    #                    xaxis=dict(title='X-AXIS'),
-    #                    yaxis=dict(title='Y-AXIS'),
-    #                    hovermode='closest')
-    # scatter = px.scatter(data, x='x', y='y', hover_data=hover_data, text=text,
-    #                      symbol=symbol, symbol_map=symbol_map, color=color)
 
     return fig
 
@@ -51,7 +43,7 @@ def kde_segment(data, segment_dict, color, segment_name, weights=None):
                          thresh=0.01, bw_method=0.1)
 
     # create the plotly figure
-    figure = go.Figure()
+    figure = go.FigureWidget()
     # go over all paths and combine them into on
     for path in og_fig.collections[-2].get_paths():
         vertices = path.vertices  # the vertices of the path
@@ -67,7 +59,7 @@ def kde_segment(data, segment_dict, color, segment_name, weights=None):
 
 def combine_plots(plot1, plot2):
     # combine two plots
-    combined = go.Figure(data=plot1.data + plot2.data)
+    combined = go.FigureWidget(data=plot1.data + plot2.data)
     return combined
 
 

@@ -17,29 +17,6 @@
 
     <title>Home</title>
     <style>
-        body {
-            background-image: url('static/grey.jpg');
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-position: center;
-        }
-
-        #buttonContainer {
-            /* make element inline flex-container */
-            /* this will make its children flex-items */
-            display: inline-flex;
-            /* align-items items in column */
-            flex-direction: column;
-            /* center items horizontally */
-            align-items: center;
-            /* center items vertically */
-            justify-content: center;
-
-            border: solid 3px black;
-            width: 400px;
-            height: 400px;
-        }
-
         .toggle {
             display: none;
         }
@@ -47,6 +24,10 @@
         a {
             color: blue;
             cursor: pointer;
+        }
+
+        label {
+            font-weight: bold;
         }
     </style>
 </head>
@@ -58,8 +39,8 @@
 <!-- this section can be replaced by a child document -->
 {% block body %}
     <div class="container-fluid">
-        <div class="row">
-            <div class="col-6">
+        <div class="row justify-content-center">
+            <div class="col-6 align-self-center">
                 <form action="{{ url_for('dynamic_post') }}" method="POST">
                     <!--k nearest neighbors-->
                     <div class="form-group">
