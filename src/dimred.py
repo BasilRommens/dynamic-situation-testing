@@ -353,19 +353,10 @@ if __name__ == '__main__':
 
     @app.callback(
         Output('graph_store_layout', 'data'),
-        [Input('graph', 'relayoutData'),
-         Input('graph_store_layout', 'data')]
+        Input('graph', 'relayoutData'),
     )
-    def update_layout_store(relayout_data, graph_store):
-        # TODO fix zoomlevel when reset
-        print(relayout_data)
-        if graph_store is None:
-            return relayout_data
-        elif 'yaxis.autorange' not in relayout_data:
-            graph_store.update(relayout_data)
-            return graph_store
-        else:
-            return relayout_data
+    def update_layout_store(relayout_data):
+        return relayout_data
 
 
     @app.callback(
@@ -442,13 +433,18 @@ if __name__ == '__main__':
 
         # keep the zoom level and everything when hovering using graph_store
         if graph_store_layout:
-            if 'xaxis.autorange' in graph_store_layout:
+            if 'xaxis.autorange' in graph_store_layout or 'autosize' in graph_store_layout:
                 fig['layout']['xaxis']['autorange'] = True
-            if 'yaxis.autorange' in graph_store_layout:
+            else:
+                fig['layout']['xaxis']['autorange'] = False
+            if 'yaxis.autorange' in graph_store_layout or 'autosize' in graph_store_layout:
                 fig['layout']['yaxis']['autorange'] = True
+            else:
+                fig['layout']['yaxis']['autorange'] = False
 
             for axis_name in ['axis', 'axis2']:
                 if f'x{axis_name}.range[0]' in graph_store_layout:
+                    print("yeet")
                     fig['layout'][f'x{axis_name}']['range'] = [
                         graph_store_layout[f'x{axis_name}.range[0]'],
                         graph_store_layout[f'x{axis_name}.range[1]']
@@ -473,8 +469,12 @@ if __name__ == '__main__':
             return fig
 
         pt_coords = pt['x'], pt['y']
-        pt_idx = data_pts[(data_pts['x'] == pt_coords[0]) & (
+        try:
+            pt_idx = data_pts[(data_pts['x'] == pt_coords[0]) & (
                 data_pts['y'] == pt_coords[1])].index[0]
+        except IndexError:
+            print('no point index found')
+            return fig
 
         # find all the neighbors of the point, both protected and unprotected
         prot_pts = list()
