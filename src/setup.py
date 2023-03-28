@@ -18,7 +18,7 @@ click_shapes = list()
 
 
 def process_fig_data(path, json_fname, csv_fname, protected_attributes,
-                     ignore_cols):
+                     ignore_cols, k=4):
     # READ AND BASIC PROCESSING
     # read the data from the csv and json file
     r = read_data(path + json_fname, path + csv_fname)
@@ -38,7 +38,6 @@ def process_fig_data(path, json_fname, csv_fname, protected_attributes,
     print('calculated distance matrix')
 
     # apply the situation testing algorithm with knn
-    k = 4
     valid_tuples = knn_situation(k, tuples, dist_mat, protected_attributes,
                                  decision_attribute)
     print('calculated knn situation testing tuples')
@@ -147,16 +146,26 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
 
 
 def calc_german_credit_fig():
+    global data
+
     # german credit dataset
     path = 'data/'
+    data['path'] = path
     json_fname = 'german_credit_data.json'
     csv_fname = 'german_credit_data_class.csv'
+    data['csv_fname'] = csv_fname
     protected_attributes = {"Sex": ["female"]}
     ignore_cols = ['Class']
+    k = 4
 
+    return calc_fig(path, json_fname, csv_fname, protected_attributes,
+                    ignore_cols, k)
+
+
+def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
     # process the data for the figure
     fig_data = process_fig_data(path, json_fname, csv_fname,
-                                protected_attributes, ignore_cols)
+                                protected_attributes, ignore_cols, k)
 
     # calculate the data needed for the plot
     preplotting_data = calc_pre_plotting(*fig_data)
@@ -165,3 +174,13 @@ def calc_german_credit_fig():
     scatter_final = calc_plot(*preplotting_data)
 
     return scatter_final, preplotting_data[8], fig_data[0]
+
+
+# calculate the figure to be used
+fig, data_pts, valid_tuples = calc_german_credit_fig()
+data = dict()
+data['fig'] = fig
+data['data_pts'] = data_pts
+data['valid_tuples'] = valid_tuples
+data['click_shapes'] = list()
+data['csv_fname'] = None

@@ -1,10 +1,12 @@
 import numpy as np
-from flask import current_app as app
+import json
+from flask import current_app as app, redirect
 from flask import render_template, request
 
 from inout import read_data
 from knn import calc_dist_mat, knn_situation
 from process import process_all
+from setup import calc_fig, data
 
 
 @app.route('/')
@@ -53,16 +55,6 @@ def home():
     return render_template('home.html', items=new_tuples, headers=headers)
 
 
-@app.route('/explore')
-def explore():
-    return render_template('explore.html')
-
-
-@app.route('/discriminate')
-def discriminate():
-    return render_template('discriminate.html')
-
-
 @app.route('/upload')
 def upload():
     return render_template('upload.html')
@@ -76,46 +68,37 @@ def dynamic():
 
 @app.route('/dynamic', methods=['POST'])
 def dynamic_post():
-    global r
+    global r, path, csv_fname, data
     form = request.form
-    # TODO add check that there is no overlap in decision attribute and sensitive attributes
-    # TODO add check that there is no overlap in ignore attributes and sensitive/decision attributes
-    k, protected_attrs = handle_situation_form(form, r)
+    k, protected_attrs, decision_attr, attrs_to_ignore = handle_situation_form(
+        form, r)
 
-    # process the data
-    tuples, ranked_values, decision_attr = process_all(r)
-    # determine the distances
-    dist_mat = calc_dist_mat(tuples, ranked_values, r.attribute_types,
-                             decision_attr, protected_attrs)
+    # create new json file
+    new_json_data = {"attribute_types":
+                         {k: r.attribute_types[k]
+                          for k in r.attribute_types.keys()},
+                     "ordinal_attribute_values":
+                         {k: r.ordinal_attribute_values[k]
+                          for k in r.ordinal_attribute_values.keys()},
+                     "attributes_to_ignore":
+                         attrs_to_ignore,
+                     "decision_attribute":
+                         decision_attr,
+                     }
 
-    # apply the situation testing algorithm with knn
-    valid_tuples = knn_situation(k, tuples, dist_mat, protected_attrs,
-                                 decision_attr)
+    json_fname = '~temp.json'
+    with open(path + json_fname, 'w') as f:
+        json.dump(new_json_data, f)
 
-    headers = sorted(list(tuples.columns))
-    headers.insert(0, 'Score')
+    fig, data_pts, valid_tuples = calc_fig(path, json_fname, csv_fname,
+                                           protected_attrs, attrs_to_ignore, k)
 
-    new_tuples = list()
-    # create a new tuple with the score and the k nearest neighbors along with
-    # its own values
-    for tuple_idx, score, k_prot, k_unprot in valid_tuples:
-        # sort the tuple by the attribute name and then only take the values
-        new_tuple = list(map(lambda x: x[1], sorted(
-            list(tuples.iloc[tuple_idx].to_dict().items()),
-            key=lambda x: x[0])))
-        new_tuple.insert(0, score)  # insert the score at the beginning
+    data['fig'] = fig
+    data['data_pts'] = data_pts
+    data['valid_tuples'] = valid_tuples
+    data['click_shapes'] = list()
 
-        # get the k closest neighbors of both protected and unprotected group
-        new_k_prot = get_knn_els(k_prot, tuples, 'protected')
-        new_k_unprot = get_knn_els(k_unprot, tuples, 'unprotected')
-
-        # create a triple tuple
-        new_tuple = (new_tuple, new_k_prot, new_k_unprot)
-
-        # add the new tuple
-        new_tuples.append(new_tuple)
-
-    return render_template('home.html', items=new_tuples, headers=headers)
+    return redirect('/dashapp')
 
 
 def get_knn_els(knn_els, tuples, el_name):
@@ -163,30 +146,28 @@ def handle_situation_form(form, r):
             ignore_attrs = form[key]
 
     # set the remaining return values
-    r.decision_attribute = {decision_attr[0]: decision_attr[1]}
-    r.attributes_to_ignore = ignore_attrs
+    decision_attr = {decision_attr[0]: decision_attr[1]}
+    attrs_to_ignore = ignore_attrs
     protected_attrs = dict(zip(sensitive_attr_vars, sensitive_attr_vals))
 
-    return k, protected_attrs
+    return k, protected_attrs, decision_attr, attrs_to_ignore
 
 
 # read the data from the csv and json file
-r = read_data('data/german_credit_data.json',
-              'data/german_credit_data_class.csv')
+path = 'data/'
+json_fname = 'german_credit_data.json'
+csv_fname = 'german_credit_data_class.csv'
+r = read_data(path + json_fname, path + csv_fname)
 
 # process the data
 tuples, ranked_values, decision_attribute = process_all(r)
+
 # determine the distances
 protected_attributes = {"Sex": ["female"]}
 dist_mat = calc_dist_mat(tuples, ranked_values, r.attribute_types,
                          decision_attribute, protected_attributes)
-# write dump
-dist_mat.dump('data/dist_mat.dump')
-# read the same dump
-dist_mat = np.load('data/dist_mat.dump', allow_pickle=True)
 
 # apply the situation testing algorithm with knn
 k = 4
-valid_tuples = knn_situation(k, tuples, dist_mat,
-                             protected_attributes,
+valid_tuples = knn_situation(k, tuples, dist_mat, protected_attributes,
                              decision_attribute)
