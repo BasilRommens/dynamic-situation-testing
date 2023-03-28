@@ -233,6 +233,7 @@ if __name__ == '__main__':
     sq_mat = scs.distance.squareform(flat_mat)
 
     # determine the total stress of the distance matrices
+    print("regular stress")
     total_stress(dist_mat, sq_mat, n_d_pts, n_d_pts)
     # determine the total knn stress of the distance matrices
     knn_els = list()
@@ -243,6 +244,7 @@ if __name__ == '__main__':
             itertools.product([valid_tuple[0]], dict(valid_tuple[3]).keys()))
         knn_els += prot_knn + unprot_knn
     # calculate the total knn stress
+    print("knn stress")
     total_knn_stress(dist_mat, sq_mat, n_d_pts, n_d_pts, knn_els)
 
     n_feat = sq_mat.shape[0] - n_d_pts
