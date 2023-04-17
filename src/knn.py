@@ -3,17 +3,30 @@ import time
 import numpy as np
 import scipy.spatial as scs
 import scipy.stats
+import sklearn.metrics
+from sklearn import preprocessing
 
-from distance import total_distance
+from distance import total_distance, ppdist, Metric, transform_tuples
 from inout import read_data
 from process import process_all
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+def attr_type_idx(attr_type):
+    if attr_type == 'interval':
+        return 0
+    elif attr_type == 'nominal':
+        return 1
+    elif attr_type == 'ordinal':
+        return 2
+
+
 def calc_dist_mat(tuples, ranked_values, attribute_types,
                   decision_attribute, protected_attributes):
-    attributes = list(tuples.columns)
+    _tuples = tuples.copy()  # copy tuples to prevent side effects
+
+    attributes = list(_tuples.columns)
     m_dict = dict()
     s_dict = dict()
     for idx, attribute in enumerate(attributes):
@@ -22,22 +35,52 @@ def calc_dist_mat(tuples, ranked_values, attribute_types,
         if attribute_type != 'interval':
             continue
 
-        all_interval = tuples[attributes[idx]].values
+        all_interval = _tuples[attributes[idx]].values
         m_dict[idx] = np.average(all_interval)
         s_dict[idx] = np.std(all_interval)
     decision_attr_idx = attributes.index(list(decision_attribute.keys())[0])
     protected_attr_idcs = [attributes.index(protected_attribute)
                            for protected_attribute in
                            protected_attributes.keys()]
-    flat_dist_mat = scs.distance.pdist(tuples.values,
-                                       metric=lambda u, v: total_distance(u, v,
-                                                                          tuples,
-                                                                          attribute_types,
-                                                                          ranked_values,
-                                                                          m_dict,
-                                                                          s_dict,
-                                                                          decision_attr_idx,
-                                                                          protected_attr_idcs))
+
+    # label encode the entire dataset
+    le = preprocessing.LabelEncoder()
+    # only select columns that contain non-numerical nominal and ordinal values
+    object_tuples = _tuples.select_dtypes(include=['object'])
+    object_tuples.replace({None: 'NA'}, inplace=True)
+    unique_tuple_values = np.unique(object_tuples.values)
+    le.fit(unique_tuple_values)
+    _tuples[object_tuples.columns] = object_tuples.apply(le.transform)
+
+    # find the index of the NA value and replace all None values with it
+    na_idx = np.where(unique_tuple_values == 'NA')[0]
+    if len(na_idx):
+        na_idx = na_idx[0]
+        _tuples.replace({na_idx: 0}, inplace=True)
+
+    _tuples = transform_tuples(_tuples, _tuples.columns, attribute_types,
+                               ranked_values, m_dict, s_dict, decision_attr_idx,
+                               protected_attr_idcs)
+
+    if type(na_idx) == int:
+        _tuples.replace({na_idx: None}, inplace=True)
+
+    attribute_types = [attribute_types[attribute] for attribute in attributes]
+    attribute_types = list(map(attr_type_idx, attribute_types))
+    metric = Metric(_tuples.columns, attribute_types, ranked_values, m_dict,
+                    s_dict, decision_attr_idx, protected_attr_idcs)
+
+    # convert all columns to float
+    temp_tuples = _tuples.values.tolist()
+    if np.dtype('float64') in _tuples.dtypes.values:
+        temp_tuples = [[None if np.isnan(v) else v for v in t] for t in
+                       temp_tuples]
+    _tuples = temp_tuples[:5_000]
+
+    start = time.time()
+    flat_dist_mat = ppdist(_tuples, metric=metric)
+    print(f'ppdist took {time.time() - start} seconds')
+
     dist_mat = scs.distance.squareform(flat_dist_mat)
 
     return dist_mat

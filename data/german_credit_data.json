@@ -35,5 +35,6 @@
   ],
   "decision_attribute": {
     "Class": 0
-  }
+  },
+  "unknowns": ["NA"]
 }

@@ -48,6 +48,11 @@ class Read:
         # get the decision attribute along with value
         self.decision_attribute = json_dict['decision_attribute']
 
+        # get the unknown list
+        self.unknowns_list = []
+        if 'unknowns' in json_dict:
+            self.unknowns_list = json_dict['unknowns']
+
 
 def read_data(json_file_name, csv_file_name):
     """

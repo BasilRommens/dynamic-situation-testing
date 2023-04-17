@@ -8,9 +8,12 @@ import scipy.spatial as scs
 import numpy as np
 import pandas as pd
 from dash import Dash, html, dcc, Output, Input, no_update, State
+from sklearn.decomposition import PCA
 from sklearn.manifold import MDS, TSNE
 import matplotlib.pyplot as plt
 import time
+
+from umap import UMAP
 
 from dataset import create_gaussian
 from globals import colors_string
@@ -83,19 +86,29 @@ def dimred_graph(dist_mat):
 
 
 def dimred_mds(dist_mat):
-    df = pd.DataFrame(dist_mat)
-    model = MDS(n_components=2, dissimilarity='precomputed')
+    model = MDS(n_components=2, dissimilarity='precomputed', n_jobs=-1)
 
-    arr = model.fit_transform(df)
+    arr = model.fit_transform(dist_mat)
     print(model.stress_)  # print the stress to show how stressed the layout is
 
     return arr
 
 
+def dimred_pca(dist_mat, dims=8):
+    model = PCA(n_components=dims)
+    arr = model.fit_transform(dist_mat)
+    return arr
+
+
+def dimred_umap(dist_mat, dense=False):
+    model = UMAP(n_components=2, densmap=dense)
+    arr = model.fit_transform(dist_mat)
+    return arr
+
+
 def dimred_tsne(dist_mat):
-    df = pd.DataFrame(dist_mat)
     model = TSNE(n_components=2, perplexity=20)
-    arr = model.fit_transform(df)
+    arr = model.fit_transform(dist_mat)
     return arr
 
 

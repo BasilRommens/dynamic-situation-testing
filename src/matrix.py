@@ -5,6 +5,7 @@ import scipy.spatial as scs
 from process import make_numeric
 import seaborn as sns
 import matplotlib.pyplot as plt
+import time
 
 eps = 1e-3
 
@@ -87,6 +88,17 @@ class Matrix:
         stay the same. We will use these two vectors to calculate the distances.
         :return: feature to data point matrix
         """
+        # get all the instances in a vector list
+        instances_ls = -self.elements.values
+        # calculate the highest and lowest feature value for each feature
+        max_instances = np.max(instances_ls, axis=0)
+        min_instances = np.min(instances_ls, axis=0)
+        interval_size_instances = max_instances - min_instances
+        instances_ls -= min_instances
+        instances_ls /= interval_size_instances
+        return instances_ls.T
+
+        # legacy code
         # create the unit vectors of the feature vectors
         feature_ls = np.array([[1 if i == col_idx else 0
                                 for i in range(len(self.elements.columns))]
@@ -103,7 +115,6 @@ class Matrix:
         instances_ls /= interval_size_instances
 
         # calculate the distances between the feature vectors and the instances
-        # one_value = lambda u, v: max_instances[np.where(u == 1)]-v[np.where(u == 1)]
         one_value = lambda u, v: v[np.where(u == 1)]
         distances = scs.distance.cdist(feature_ls, instances_ls, one_value)
 
@@ -117,6 +128,18 @@ class Matrix:
         will use these two vectors to calculate the distances.
         :return: data point to feature matrix
         """
+        # get all the instances in a vector list
+        instances_ls = -self.elements.values
+        # calculate the highest and lowest feature value for each feature
+        max_instances = np.max(instances_ls, axis=0)
+        min_instances = np.min(instances_ls, axis=0)
+        interval_size_instances = max_instances - min_instances
+        instances_ls -= min_instances
+        instances_ls /= interval_size_instances
+
+        return instances_ls
+
+        # legacy code
         # create the unit vectors for the instances
         instances_ls = np.array([[1 if i == row_idx else 0
                                   for i in range(len(self.elements.values))]
@@ -136,7 +159,6 @@ class Matrix:
         feature_ls /= np.array([interval_size_features]).T
 
         # calculate the distances between the data point vectors and features
-        # one_value = lambda u, v: np.max(v)-v[np.where(u == 1)]
         one_value = lambda u, v: v[np.where(u == 1)]
         distances = scs.distance.cdist(instances_ls, feature_ls, one_value)
 

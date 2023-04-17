@@ -90,10 +90,13 @@ def dynamic_post():
     with open(path + json_fname, 'w') as f:
         json.dump(new_json_data, f)
 
-    fig, data_pts, valid_tuples = calc_fig(path, json_fname, csv_fname,
-                                           protected_attrs, attrs_to_ignore, k)
+    fig, data_pts, valid_tuples, table_ls = calc_fig(path, json_fname,
+                                                       csv_fname,
+                                                       protected_attrs,
+                                                       attrs_to_ignore, k)
 
     data['fig'] = fig
+    data['table'] = table_ls
     data['data_pts'] = data_pts
     data['valid_tuples'] = valid_tuples
     data['click_shapes'] = list()

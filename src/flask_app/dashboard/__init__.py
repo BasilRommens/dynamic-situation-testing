@@ -1,6 +1,7 @@
 import dash
 import plotly.graph_objects as go
-from dash import html, dcc, Output, Input, no_update, State
+from dash import html, dcc, Output, Input, no_update, State, dash_table
+import dash_bootstrap_components as dbc
 
 from flask_app.dashboard.layout import html_layout
 from setup import data
@@ -27,7 +28,13 @@ def init_dashboard(server):
                 figure=data['fig'],
                 clear_on_unhover=True,
                 style={'width': '100%', 'height': '100vh',
-                       'display': 'inline-block'}),
+                       'display': 'inline-block'}
+            ),
+            dbc.Container([
+                dash_table.DataTable(data['table'],
+                                     [{"name": key, "id": key} for key in data['table'][0].keys()],
+                                     id='tbl'),
+            ]),
             dcc.Store(id='graph_store_layout'),
             dcc.Store(id='graph_store_style')
         ]
@@ -162,8 +169,8 @@ def init_callbacks(dash_app):
         pt_coords = pt['x'], pt['y']
         try:
             pt_idx = \
-            data['data_pts'][(data['data_pts']['x'] == pt_coords[0]) & (
-                    data['data_pts']['y'] == pt_coords[1])].index[0]
+                data['data_pts'][(data['data_pts']['x'] == pt_coords[0]) & (
+                        data['data_pts']['y'] == pt_coords[1])].index[0]
         except IndexError:
             print('no point index found')
             return data['fig']

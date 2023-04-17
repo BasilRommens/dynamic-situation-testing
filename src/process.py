@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from sklearn import preprocessing
 
@@ -45,7 +47,8 @@ def remove_redundant_attributes(all_tuples, attributes_to_ignore):
 
 
 def process_tuples(all_tuples, attribute_types,
-                   ordinal_attribute_values, attributes_to_ignore):
+                   ordinal_attribute_values, attributes_to_ignore,
+                   unknowns_list=[]):
     """
     process the tuples to the correct types and remove their attributes to
     ignore and return the processed attribute list
@@ -60,20 +63,19 @@ def process_tuples(all_tuples, attribute_types,
     all_tuples = remove_redundant_attributes(all_tuples, attributes_to_ignore)
     attributes = list(all_tuples.columns)
 
+    # replace unknown values with None
+    unknowns_dict = {unknown: None for unknown in unknowns_list}
+    all_tuples = all_tuples.replace(unknowns_dict)
+
     # convert the values to the correct type
-    for tuple_idx in all_tuples.index:
-        new_tuple = list()
-        for idx, attribute in enumerate(attributes):
-            tuple_value = all_tuples[attribute][tuple_idx]
-            # get type per attribute
-            attribute_type = attribute_types[attribute]
+    for attribute in attributes:
+        # get type per attribute
+        attribute_type = attribute_types[attribute]
 
-            # convert the value to the correct type
-            new_value = convert_value(tuple_value, attribute, attribute_type,
-                                      ordinal_attribute_values)
-            new_tuple.append(new_value)
-
-        all_tuples.iloc[tuple_idx] = new_tuple
+        # convert the value to the correct type
+        all_tuples[attribute] = all_tuples[attribute].apply(
+            lambda x: convert_value(x, attribute, attribute_type,
+                                    ordinal_attribute_values))
 
     return all_tuples, attributes
 
@@ -126,14 +128,17 @@ def process_all(r):
     ordinal_attribute_values = r.ordinal_attribute_values
     attributes_to_ignore = r.attributes_to_ignore
     decision_attribute = r.decision_attribute
+    unknowns_list = r.unknowns_list
 
     # process the tuples
     tuples, attributes = process_tuples(all_tuples, attribute_types,
                                         ordinal_attribute_values,
-                                        attributes_to_ignore)
+                                        attributes_to_ignore,
+                                        unknowns_list)
 
     # process the ordinal attribute values to ranked values
     ranked_values = process_ranked_values(ordinal_attribute_values)
+
     # process decision attribute
     decision_attribute = process_decision_attribute(attribute_types,
                                                     decision_attribute,
@@ -154,12 +159,12 @@ def make_numeric(df, string_to_value_dict=dict()):
         if df[col].dtype != 'object':
             continue
 
-        # use the dict if the column is an attribute has a numerical value
+        # use the dict if the column is an attribute that has a numerical value
         if col in string_to_value_dict.keys():
             # convert the string attributes to numeric values
             string_to_value = string_to_value_dict[col]
             df[col] = df[col].map(string_to_value)
-        else:  # otherwise we just use a label encoder
+        else:  # otherwise use a label encoder
             le = preprocessing.LabelEncoder()
             df[col] = le.fit_transform(df[col])
     df.fillna(-1, inplace=True)

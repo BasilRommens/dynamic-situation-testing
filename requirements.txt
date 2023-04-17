@@ -7,3 +7,5 @@ networkx~=3.0
 plotly
 dash>=2.9
 ipywidgets>=7.0.0
+cython
+dash_bootstrap_components
