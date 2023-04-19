@@ -20,8 +20,11 @@ def is_nan(value):
 
 def create_segment_name(segment_dict):
     segment_name = ''
-    for idx, (key, (lo, hi)) in enumerate(segment_dict.items()):
-        segment_name += f'{key}=[{lo},{hi}]'
+    for idx, (key, vals) in enumerate(segment_dict.items()):
+        if type(vals) == list or type(vals) == tuple:
+            segment_name += f'{key}=[{vals[0]},{vals[1]}]'
+        else:
+            segment_name += f'{key}={vals}'
         if idx != len(segment_dict) - 1:
             segment_name += ','
     return segment_name

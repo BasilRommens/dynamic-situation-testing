@@ -32,8 +32,12 @@ def scatter_plot(data, hover_data=None, text=None, size=None,
 
 def kde_segment(data, segment_dict, color, segment_name, weights=None):
     # bound the data points using the segment dictionary
-    for col, (lo_bound, hi_bound) in segment_dict.items():
-        data = data[(lo_bound <= data[col]) & (data[col] <= hi_bound)]
+    for col, vals in segment_dict.items():
+        if type(vals) == list or type(vals) == tuple:
+            lo_bound, hi_bound = vals
+            data = data[(lo_bound <= data[col]) & (data[col] <= hi_bound)]
+        else:
+            data = data[data[col] == vals]
     if weights is not None:
         idx_val = data.index.values
         weights = weights[idx_val]

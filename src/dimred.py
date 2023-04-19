@@ -13,6 +13,10 @@ from sklearn.manifold import MDS, TSNE
 import matplotlib.pyplot as plt
 import time
 
+import os
+
+# suppress tensorflow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from umap import UMAP
 
 from dataset import create_gaussian
@@ -191,8 +195,10 @@ if __name__ == '__main__':
     class_colors = [colors_string[1] if c == 1.0 else colors_string[2] for c in
                     class_col]
     df = df.drop(columns=ignore_cols)
+
     # bounds for different columns
     segment_dict_ls = [{'Credit amount': (6000, 20_000)}]
+
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew-open',
                   'neutral': 'circle',

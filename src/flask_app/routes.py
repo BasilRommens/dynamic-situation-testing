@@ -3,10 +3,14 @@ import json
 from flask import current_app as app, redirect
 from flask import render_template, request
 
+from globals import colors_string
+from helper import create_segment_name
 from inout import read_data
 from knn import calc_dist_mat, knn_situation
 from process import process_all
-from setup import calc_fig, data
+from setup import calc_fig, data, get_contour_html
+
+from viz import dynamic
 
 
 @app.route('/')
@@ -55,13 +59,93 @@ def home():
     return render_template('home.html', items=new_tuples, headers=headers)
 
 
-@app.route('/upload')
+@app.route('/upload', methods=['POST'])
 def upload():
     return render_template('upload.html')
 
 
+@app.route('/new_contour', methods=['POST'])
+def add_contour():
+    global data
+    # read the form
+    form = request.form
+
+    # if the form is empty return
+    if not len(form):
+        return redirect('/dashapp')
+
+    # feature name
+    feat_name = list(form.keys())[0]
+
+    # get the data type of the new contour
+    data_type = data['feature_types_dict'][feat_name]
+
+    contour = None
+    if data_type == 'nominal':
+        val = form[feat_name]
+        # create the contour in dict form
+        contour = {feat_name: val}
+
+        # get the name of the new contour
+        contour_name = create_segment_name(contour)
+        data['contour_names'].append(contour_name)
+    elif data_type == 'ordinal':
+        val = form[feat_name]
+        # create the contour in dict form
+        contour = {feat_name: val}
+
+        # get the ordinal attribute dict
+        ordinal_attr_dict = data['ordinal_attr_dict']
+        # invert the dict
+        inverted_dict = {v: k for k, v in ordinal_attr_dict[feat_name].items()}
+
+        # get an inverted dict to convert the value to readable value
+        # get the name of the new contour
+        contour_name = create_segment_name({feat_name: inverted_dict[int(val)]})
+        data['contour_names'].append(contour_name)
+    elif data_type == 'interval':
+        _range = list()
+        for range_val in form.values():
+            _range.append(int(range_val))
+        _range = sorted(_range)
+        # create the contour in dict form
+        contour = {feat_name: _range}
+
+        # get the name of the new contour
+        contour_name = create_segment_name(contour)
+        data['contour_names'].append(contour_name)
+
+    # add the contour to the contours in data
+    data['contours'].append(contour)
+
+
+    # create the contour html for contour removal
+    data['contour_html'] = get_contour_html(data['contour_names'])
+
+    # create the segments using seaborn and translate to plotly
+    # all possible colors
+    used_colors_idcs = set(data['used_colors_idcs'])
+    all_colors = set([i for i in range(len(colors_string))])
+    possible_colors = list(all_colors.difference(used_colors_idcs))
+    new_idx = possible_colors[0]
+    used_colors_idcs.add(new_idx)
+    data['used_colors_idcs'] = list(used_colors_idcs)
+
+    # create the plotly segment
+    kde_segment = dynamic.kde_segment(data['data_pts'].copy(), contour,
+                                      colors_string[new_idx], contour_name)
+
+    # prepend the contour to the figure
+    new_fig = dynamic.combine_plots(kde_segment, data['fig'])
+
+    # set plotly white theme
+    data['fig'] = dynamic.set_theme(new_fig, 'plotly_white')
+
+    return redirect('/dashapp')
+
+
 @app.route('/dynamic')
-def dynamic():
+def dynamic_site():
     attrs = list(tuples.columns)
     return render_template('dynamic.html', attrs=attrs)
 
@@ -91,9 +175,9 @@ def dynamic_post():
         json.dump(new_json_data, f)
 
     fig, data_pts, valid_tuples, table_ls = calc_fig(path, json_fname,
-                                                       csv_fname,
-                                                       protected_attrs,
-                                                       attrs_to_ignore, k)
+                                                     csv_fname,
+                                                     protected_attrs,
+                                                     attrs_to_ignore, k)
 
     data['fig'] = fig
     data['table'] = table_ls
@@ -101,6 +185,50 @@ def dynamic_post():
     data['valid_tuples'] = valid_tuples
     data['click_shapes'] = list()
 
+    return redirect('/dashapp')
+
+
+@app.route('/remove_contour/<int:contour_id>', methods=['POST'])
+def remove_contours(contour_id: int):
+    global data
+
+    # contour name
+    contour_name = data['contour_names'][contour_id]
+
+    # remove the contours such that they aren't in a list anymore
+    data['contour_names'].pop(contour_id)
+    data['contours'].pop(contour_id)
+
+    # remove the contours from the figure
+    idx_list = list()
+    for figure_el_idx, figure_el in enumerate(data['fig']['data']):
+        if 'legendgroup' not in figure_el:
+            continue
+        if figure_el['legendgroup'] == contour_name:
+            color_idx = colors_string.index(figure_el['fillcolor'])
+            if color_idx in data['used_colors_idcs']:
+                data['used_colors_idcs'].remove(color_idx)
+            idx_list.append(figure_el_idx)
+
+    # get the max index from all the figure elements
+    max_idx = len(data['fig']['data'])
+    # only keep the elements that are not in the index list
+    new_fig = list()
+    for idx in range(max_idx):
+        if idx in idx_list:
+            continue
+        new_fig.append(data['fig']['data'][idx])
+
+    # store the new figure
+    data['fig']['data'] = tuple(new_fig)
+
+    # set plotly white theme
+    data['fig'] = dynamic.set_theme(data['fig'], 'plotly_white')
+
+    # regenerate the list of buttons in the dash app
+    data['contour_html'] = get_contour_html(data['contour_names'])
+
+    # redirect to /dashapp to show the figure
     return redirect('/dashapp')
 
 

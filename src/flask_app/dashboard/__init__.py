@@ -1,6 +1,7 @@
 import dash
 import plotly.graph_objects as go
-from dash import html, dcc, Output, Input, no_update, State, dash_table
+from dash import html, dcc, Output, Input, no_update, State, dash_table, ALL, \
+    MATCH
 import dash_bootstrap_components as dbc
 
 from flask_app.dashboard.layout import html_layout
@@ -9,36 +10,70 @@ from setup import data
 click_shapes = list()
 
 
+def serve_layout():
+    graph = [
+        html.H3("Discrimination Plot"),
+        dcc.Graph(
+            id="graph",
+            figure=data['fig'],
+            clear_on_unhover=True,
+            style={
+                'display': 'inline-block'}
+        )]
+    contour_form = [
+        html.H3("Add Contours"),
+        html.Form(
+            data['contour_form'],
+            id="form",
+            action='/new_contour',
+            method='POST',
+            className='mb-3'
+        ),
+    ]
+    contour_rm_btns = [
+        html.Div(data['contour_html'],
+                 id='contour_buttons'),
+    ]
+    table = [
+        html.H3("Table of Discriminated Tuples"),
+        dash_table.DataTable(data['table'],
+                             [{"name": key, "id": key}
+                              for key in
+                              data['table'][0].keys()],
+                             id='tbl'),
+    ]
+    return html.Div([
+        dbc.Container([
+            dbc.Row([
+                dbc.Col(graph, width=8),
+                dbc.Col([
+                    dbc.Row(dbc.Col(contour_form)),
+                    dbc.Row(dbc.Col()),
+                    dbc.Row(dbc.Col(contour_rm_btns),
+                            class_name="position-absolute bottom-0 start-0")
+                ], width=4, class_name="position-relative")
+            ], class_name='mt-3'),
+            dbc.Row(dbc.Col(table, align='end'))
+        ]),
+        dcc.Store(id='graph_store_layout'),
+        dcc.Store(id='graph_store_style'),
+    ])
+
+
 def init_dashboard(server):
     global data
 
     dash_app = dash.Dash(
         server=server,
         routes_pathname_prefix='/dashapp/',
+        assets_folder='static/',
     )
 
     # custom HTML layout
     dash_app.index_string = html_layout
 
     # create Dash layout
-    dash_app.layout = html.Div(
-        children=[
-            dcc.Graph(
-                id="graph",
-                figure=data['fig'],
-                clear_on_unhover=True,
-                style={'width': '100%', 'height': '100vh',
-                       'display': 'inline-block'}
-            ),
-            dbc.Container([
-                dash_table.DataTable(data['table'],
-                                     [{"name": key, "id": key} for key in data['table'][0].keys()],
-                                     id='tbl'),
-            ]),
-            dcc.Store(id='graph_store_layout'),
-            dcc.Store(id='graph_store_style')
-        ]
-    )
+    dash_app.layout = serve_layout
     init_callbacks(dash_app)
 
     return dash_app.server
@@ -46,6 +81,19 @@ def init_dashboard(server):
 
 def init_callbacks(dash_app):
     global data
+
+    @dash_app.callback(
+        Output('featureOptions', 'children'),
+        Input('feature', 'value'),
+        prevent_initial_call=True
+    )
+    def update_contour_form(value):
+        global data
+
+        contour_form_options = data['contour_form_options']
+        for idx, contour_form_option in enumerate(contour_form_options):
+            if data['features'][idx] == value:
+                return contour_form_option
 
     @dash_app.callback(
         Output('graph_store_style', 'data'),

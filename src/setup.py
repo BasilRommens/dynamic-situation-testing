@@ -1,8 +1,10 @@
 import time
 
+import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from dash import html, dcc
 
 from dimred import dimred_mds, dimred_pca, dimred_umap
 from globals import colors_string
@@ -68,8 +70,10 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
     class_colors = [colors_string[1] if c == 1 else colors_string[2] for c in
                     class_col]
     df = df.drop(columns=ignore_cols)
+
     # bounds for different columns
     segment_dict_ls = [{'Credit amount': (6000, 20_000)}]
+
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew-open',
                   'neutral': 'circle',
@@ -84,12 +88,12 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
     n_d_pts = len(df)
 
     # different dimensionality reduction techniques
-    start = time.time()
+    dim_red_samples = dimred_mds(dist_mat)
     # dimensionality reduce first with PCA
-    dim_red_samples = dimred_pca(dist_mat, dims=8)
-    print(f'dimred in {time.time() - start} seconds')
-    dim_red_samples = dimred_umap(dim_red_samples, dense=True)
-    print(f'dimred in {time.time() - start} seconds')
+    # dim_red_samples = dimred_pca(dist_mat, dims=8)
+    # print(f'dimred in {time.time() - start} seconds')
+    # dim_red_samples = dimred_umap(dim_red_samples, dense=True)
+    # print(f'dimred in {time.time() - start} seconds')
 
     n_feat = dim_red_samples.shape[0] - n_d_pts
 
@@ -140,9 +144,14 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
     # create the segments using seaborn and translate to plotly
     init_segment = go.FigureWidget()
     # bw_weigths = calc_bw_weights(data_pts.values, 1)
+    contour_names = list()
+    used_colors_idcs = list()
     for i, segment_dict in enumerate(segment_dict_ls):
+        # add the idx to used colors
+        used_colors_idcs.append(i)
         # create the name of the segment
         segment_name = create_segment_name(segment_dict)
+        contour_names.append(segment_name)
 
         # create the plotly segment
         kde_segment = dynamic.kde_segment(data_pts.copy(), segment_dict,
@@ -157,7 +166,7 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
     # set the theme of the plot
     scatter_final = dynamic.set_theme(scatter_final, 'plotly_white')
 
-    return scatter_final
+    return scatter_final, contour_names, segment_dict_ls, used_colors_idcs
 
 
 def calc_german_credit_fig():
@@ -223,6 +232,67 @@ def calc_table(data_pts, valid_tuples):
     return table_ls
 
 
+def get_contour_html(contour_names):
+    title = html.H3('Remove Contours')
+    contour_html = [html.Form(dbc.Input(id=f'contour_{i}',
+                                        value=contour_name,
+                                        class_name="btn btn-danger mr-2 my-2",
+                                        type="submit"),
+                              action=f'/remove_contour/{i}',
+                              method='POST',
+                              id=f'form_contour_{i}', )
+                    for i, contour_name in enumerate(contour_names)]
+    contour_html.insert(0, title)
+    return contour_html
+
+
+def get_feature_form(feature, feature_value, feature_type, ordinal_attr_dict):
+    input_id = feature + '_input'
+    if feature_type == 'interval':
+        # get the minimum and the maximum value of the slider
+        _min = min(feature_value)
+        _max = max(feature_value)
+
+        # get the step size
+        return html.Div([dbc.Input(id=input_id + '1', type='number', value=_min,
+                                   min=_min, max=_max, name=feature),
+                         dbc.Input(id=input_id + '2', type='number', value=_max,
+                                   min=_min, max=_max, name=feature + '2')])
+    if feature_type == 'ordinal':
+        inverted_dict = {v: k for k, v in ordinal_attr_dict[feature].items() if
+                         not np.isnan(v)}
+        new_options = list()
+        for option in feature_value:
+            if option not in inverted_dict:
+                continue
+            new_option = {'label': inverted_dict[option], 'value': option}
+            new_options.append(new_option)
+        return dbc.Select(id=input_id, options=new_options,
+                          value=feature_value[0], name=feature)
+    if feature_type == 'nominal':
+        return dbc.Select(id=input_id, options=feature_value,
+                          value=feature_value[0], name=feature)
+
+
+def construct_contour_form(features, feature_values, feature_types,
+                           ordinal_attr_dict):
+    options = [{'label': feature, 'value': feature} for feature in features]
+    option_forms = [
+        html.Div(
+            id=feature,
+            children=[
+                html.Label(feature, htmlFor=feature + '_input'),
+                get_feature_form(feature, feature_values[idx],
+                                 feature_types[idx], ordinal_attr_dict),
+            ]) for idx, feature in enumerate(features)
+    ]
+    return [
+        html.Div(dbc.Select(id='feature', options=options, ), className='mb-2'),
+        html.Div(id='featureOptions'),
+        html.Button('Add', type='submit',
+                    className='btn btn-success mt-2')], option_forms
+
+
 def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
     # process the data for the figure
     fig_data = process_fig_data(path, json_fname, csv_fname,
@@ -234,20 +304,55 @@ def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
     print('calculated preplotting data')
 
     # plot the plot
-    scatter_final = calc_plot(*preplotting_data)
+    scatter_final, contour_names, contours, used_colors_idcs = calc_plot(
+        *preplotting_data)
     print('calculated plot')
+
+    # get the contour html
+    contour_html = get_contour_html(contour_names)
+    print('fetched contour html')
+
+    # generate the form for the contours
+    # only take features that are not ignored
+    # (aka not in ignore_cols or protected attr)
+    df = fig_data[1].copy()
+    df.drop(fig_data[2].keys(), axis=1, inplace=True)
+    df.drop(fig_data[3], axis=1, inplace=True)
+
+    ordinal_attr_dict = fig_data[4].ordinal_attribute_values
+    features = df.columns
+    feature_values = [df[c].unique() for c in features]
+    attr_types_dict = fig_data[4].attribute_types
+    feature_types = [attr_types_dict[feature] for feature in features]
+    contour_form, contour_form_options = construct_contour_form(features,
+                                                                feature_values,
+                                                                feature_types,
+                                                                ordinal_attr_dict)
+    print('generated contour form')
 
     table_ls = calc_table(preplotting_data[8], fig_data[0])
     print('calculated table')
 
-    return scatter_final, preplotting_data[8], fig_data[0], table_ls
+    return scatter_final, preplotting_data[8], fig_data[
+        0], table_ls, contour_names, contours, contour_html, contour_form, \
+        contour_form_options, list(
+        features), attr_types_dict, used_colors_idcs, ordinal_attr_dict
 
 
 # calculate the figure to be used
-fig, data_pts, valid_tuples, table_ls = calc_german_credit_fig()
+fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, contour_form, contour_form_options, features, attr_types_dict, used_colors_idcs, ordinal_attr_dict = calc_german_credit_fig()
 data['table'] = table_ls
 data['fig'] = fig
 data['data_pts'] = data_pts
+data['contour_names'] = contour_names
+data['contours'] = contours
+data['contour_html'] = contour_html
+data['contour_form'] = contour_form
+data['contour_form_options'] = contour_form_options
+data['used_colors_idcs'] = used_colors_idcs
+data['features'] = features
+data['feature_types_dict'] = attr_types_dict
+data['ordinal_attr_dict'] = ordinal_attr_dict
 data['valid_tuples'] = valid_tuples
 data['click_shapes'] = list()
 data['csv_fname'] = None
