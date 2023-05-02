@@ -22,8 +22,8 @@ def attr_type_idx(attr_type):
         return 2
 
 
-def calc_dist_mat(tuples, ranked_values, attribute_types,
-                  decision_attribute, protected_attributes):
+def calc_dist_mat(tuples, ranked_values, attribute_types, decision_attribute,
+                  protected_attributes):
     _tuples = tuples.copy()  # copy tuples to prevent side effects
 
     attributes = list(_tuples.columns)
@@ -165,8 +165,7 @@ def diff(decision_attribute_idx, dist_mat, idx, k, protected_tuple_idxs,
     return _diff, idx_group_prot, idx_group_unprot
 
 
-def calc_prop_dec_group(decision_attribute_idx, idx_group, k, tuple,
-                        tuples):
+def calc_prop_dec_group(decision_attribute_idx, idx_group, k, tuple, tuples):
     p = sum(1 for idx, _ in idx_group if
             tuples.iloc[idx][decision_attribute_idx] == tuple[
                 decision_attribute_idx]) / k

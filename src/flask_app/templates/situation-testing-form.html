@@ -38,12 +38,17 @@
 
 <!-- this section can be replaced by a child document -->
 {% block body %}
-    <div class="container-fluid">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-6 align-self-center">
+                <h3>Situation Testing Form</h3>
+            </div>
+        </div>
         <div class="row justify-content-center">
             <div class="col-6 align-self-center">
                 <form action="{{ url_for('dynamic_post') }}" method="POST">
                     <!--k nearest neighbors-->
-                    <div class="form-group">
+                    <div class="form-group mt-2">
                         <label for="k">k</label>
                         <input name="k" type="number" class="form-control"
                                id="k"
@@ -52,7 +57,7 @@
 
                     <!--sensitive attribute-->
                     <div id="sensitiveAttr">
-                        <div class="form-group" id="sensitiveAttrVarField">
+                        <div class="form-group mt-2" id="sensitiveAttrVarField">
                             <label for="sensitiveAttrVar">
                                 Sensitive Attribute Variable
                             </label>
@@ -63,7 +68,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="form-group" id="sensitiveAttrValField">
+                        <div class="form-group mt-2" id="sensitiveAttrValField">
                             <label for="sensitiveAttrVal">Sensitive Attribute
                                 Value</label>
                             <input type="text" class="form-control"
@@ -77,7 +82,7 @@
                     </button>
 
                     <!--decision attribute-->
-                    <div class="form-group">
+                    <div class="form-group mt-2">
                         <label for="decisionAttrVar">Decision Attribute
                             Variable</label>
                         <select name="decisionAttrVar" class="form-control"
@@ -87,7 +92,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group mt-2">
                         <label for="decisionAttrVal">Decision Attribute
                             Value</label>
                         <input name="decisionAttrVal" type="text"
@@ -95,7 +100,7 @@
                     </div>
 
                     <!--ignore attribute-->
-                    <div class="form-group">
+                    <div class="form-group mt-2">
                         <label for="ignoreAttr">Ignore Attributes</label>
                         <select name="ignoreAttr" class="form-control"
                                 id="ignoreAttr" multiple>
@@ -106,7 +111,7 @@
                     </div>
 
                     <!--submission button-->
-                    <input type="submit" class="btn btn-primary my-2"
+                    <input type="submit mt-2" class="btn btn-primary my-2"
                            value="Submit">
                 </form>
             </div>

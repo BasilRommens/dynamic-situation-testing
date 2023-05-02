@@ -19,6 +19,7 @@ from viz import dynamic
 click_shapes = list()
 
 data = dict()
+data['size_lim'] = 1000
 
 
 def process_fig_data(path, json_fname, csv_fname, protected_attributes,
@@ -26,6 +27,7 @@ def process_fig_data(path, json_fname, csv_fname, protected_attributes,
     # READ AND BASIC PROCESSING
     # read the data from the csv and json file
     r = read_data(path + json_fname, path + csv_fname)
+    r.df = r.df.head(data['size_lim'])
     print('read data')
 
     # process the data
@@ -58,21 +60,34 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
 
     # read the complete dataset in original form
     df = pd.read_csv(path + csv_fname)
+    df = df.head(data['size_lim'])
     og_df = df.copy()
 
     # get the tuples with the sensitive attributes
     sensitive_tuple_idxs = get_tuples_with_attr(df, protected_attributes)
     decision_attr = list(decision_attribute.keys())[0]
+    og_decision_attr_vals = df[decision_attr].values
+
+    # convert all values to string
+    og_decision_attr_vals = [str(x) for x in og_decision_attr_vals]
+
     df[decision_attr] = df[decision_attr].apply(
         lambda x: 0 if x == decision_attribute[decision_attr] else 1)
     df = make_numeric(df, r.ordinal_attribute_values)
     class_col = df[decision_attr]
     class_colors = [colors_string[1] if c == 1 else colors_string[2] for c in
                     class_col]
+
+    # create a zip of the class colors and the decision attribute values
+    class_color_names = zip(class_colors, og_decision_attr_vals)
+
+    # get only the unique pairs to construct a dict
+    class_color_names_dict = dict(set(class_color_names))
+
     df = df.drop(columns=ignore_cols)
 
     # bounds for different columns
-    segment_dict_ls = [{'Credit amount': (6000, 20_000)}]
+    segment_dict_ls = []
 
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew-open',
@@ -108,20 +123,79 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
     feat_pts['type'] = 2
 
     return all_tuple_markers, df, og_df, sensitive_tuple_idxs, segment_dict_ls, \
-        symbol_map, n_d_pts, n_feat, data_pts, feat_pts, class_colors
+        symbol_map, n_d_pts, n_feat, data_pts, feat_pts, class_colors, class_color_names_dict
+
+
+def sort_color_marker_pair(pair):
+    match pair[0]:
+        case 'positive discrimination':
+            return 0
+        case 'negative discrimination':
+            return 1
+        case 'sensitive':
+            return 2
+        case 'neutral':
+            return 3
 
 
 def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
               segment_dict_ls, symbol_map, n_d_pts, n_feat, data_pts, feat_pts,
-              class_colors):
-    # create a basic scatter plot of data points
-    scatter_data = dynamic.scatter_plot(data_pts,
-                                        hover_data=list(og_df.columns),
-                                        symbol=all_tuple_markers,
-                                        symbol_map=symbol_map,
-                                        color=np.array(class_colors),
-                                        size=[10] * n_d_pts, width=2,
-                                        name='Tuples')
+              class_colors, class_colors_name_dict):
+    # figure to which to add all the scatter plot data
+    scatter_data = go.FigureWidget()
+
+    # split the data points according to a pair of class colors and symbols
+    colors_decision = list(
+        map(lambda x: class_colors_name_dict[x], class_colors))
+    rev_class_colors_name_dict = {v: k for k, v in
+                                  class_colors_name_dict.items()}
+    markers_colors_zip = list(zip(all_tuple_markers, colors_decision))
+    unique_marker_color_pairs = list(set(markers_colors_zip))
+
+    # sort unique marker color pairs as it makes it easier in the plot
+    unique_marker_color_pairs = sorted(unique_marker_color_pairs,
+                                       key=sort_color_marker_pair)
+
+    for unique_marker_color_pair in unique_marker_color_pairs:
+        # determine the name of the marker color pair
+        marker_color_pair_name = ",".join(unique_marker_color_pair)
+
+        # find the indices of all the tuples with the same marker and color
+        indices = [i for i, x in enumerate(markers_colors_zip) if
+                   x == unique_marker_color_pair]
+
+        # get the data points with the same marker and color
+        data_pts_same_marker_color = data_pts.iloc[indices]
+
+        # get the colors with the same marker and color
+        colors_same_marker_color = [rev_class_colors_name_dict[
+                                        unique_marker_color_pair[1]]] * len(
+            indices)
+
+        # get the markers with the same marker and color
+        markers_same_marker_color = [unique_marker_color_pair[0]] * len(indices)
+
+        # create the scatter plot for that unique marker color pair
+        _scatter_data = dynamic.scatter_plot(data_pts_same_marker_color,
+                                             hover_data=list(
+                                                 data_pts_same_marker_color.columns),
+                                             symbol=markers_same_marker_color,
+                                             symbol_map=symbol_map,
+                                             color=np.array(
+                                                 colors_same_marker_color),
+                                             size=[10] * len(indices), width=2,
+                                             name=marker_color_pair_name)
+        # add this to the scatter data figure
+        scatter_data = dynamic.combine_plots(scatter_data, _scatter_data)
+
+    # # create a basic scatter plot of data points
+    # scatter_data = dynamic.scatter_plot(data_pts,
+    #                                     hover_data=list(og_df.columns),
+    #                                     symbol=all_tuple_markers,
+    #                                     symbol_map=symbol_map,
+    #                                     color=np.array(class_colors),
+    #                                     size=[10] * n_d_pts, width=2,
+    #                                     name='Tuples')
     # scatter plot of feature points
     scatter_feature = dynamic.scatter_plot(feat_pts, text=list(df.columns),
                                            size=[20] * n_feat,
@@ -233,7 +307,7 @@ def calc_table(data_pts, valid_tuples):
 
 
 def get_contour_html(contour_names):
-    title = html.H3('Remove Contours')
+    title = html.H3('Remove Contours', className='mx-2')
     contour_html = [html.Form(dbc.Input(id=f'contour_{i}',
                                         value=contour_name,
                                         class_name="btn btn-danger mr-2 my-2",
@@ -242,7 +316,13 @@ def get_contour_html(contour_names):
                               method='POST',
                               id=f'form_contour_{i}', )
                     for i, contour_name in enumerate(contour_names)]
-    contour_html.insert(0, title)
+
+    if len(contour_html):
+        contour_html.insert(0, title)
+    else:
+        contour_html = [title, html.P('No contours to remove',
+                                      className='mx-2 text-muted')]
+
     return contour_html
 
 
@@ -314,10 +394,9 @@ def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
 
     # generate the form for the contours
     # only take features that are not ignored
-    # (aka not in ignore_cols or protected attr)
+    # (aka not in protected attr)
     df = fig_data[1].copy()
     df.drop(fig_data[2].keys(), axis=1, inplace=True)
-    df.drop(fig_data[3], axis=1, inplace=True)
 
     ordinal_attr_dict = fig_data[4].ordinal_attribute_values
     features = df.columns
@@ -340,7 +419,9 @@ def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
 
 
 # calculate the figure to be used
-fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, contour_form, contour_form_options, features, attr_types_dict, used_colors_idcs, ordinal_attr_dict = calc_german_credit_fig()
+fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
+    contour_form, contour_form_options, features, attr_types_dict, \
+    used_colors_idcs, ordinal_attr_dict = calc_german_credit_fig()
 data['table'] = table_ls
 data['fig'] = fig
 data['data_pts'] = data_pts

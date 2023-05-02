@@ -1,5 +1,9 @@
+import os
+
 import numpy as np
 import json
+
+import pandas as pd
 from flask import current_app as app, redirect
 from flask import render_template, request
 
@@ -9,13 +13,17 @@ from inout import read_data
 from knn import calc_dist_mat, knn_situation
 from process import process_all
 from setup import calc_fig, data, get_contour_html
-
+from werkzeug.utils import secure_filename
 from viz import dynamic
 
 
 @app.route('/')
 def home():
-    global valid_tuples
+    return redirect('/upload')
+
+    global data
+
+    valid_tuples = data['valid_tuples']
     headers = sorted(list(tuples.columns))
     headers.insert(0, 'Score')
 
@@ -59,9 +67,62 @@ def home():
     return render_template('home.html', items=new_tuples, headers=headers)
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/upload')
 def upload():
     return render_template('upload.html')
+
+
+@app.route('/upload', methods=['POST'])
+def upload_post():
+    global data
+
+    csv_f = request.files['csv-file']
+    csv_fname = secure_filename(csv_f.filename)
+    csv_path_fname = os.path.join(app.config['UPLOAD_FOLDER'], csv_fname)
+    csv_f.save(csv_path_fname)
+
+    json_f = request.files['json-file']
+    json_fname = secure_filename(json_f.filename)
+    json_path_fname = os.path.join(app.config['UPLOAD_FOLDER'], json_fname)
+    json_f.save(json_path_fname)
+
+    # TODO make this cleaner
+    # read the data from the csv and json file
+    data['r'] = read_data(json_path_fname, csv_path_fname)
+    data['r'].df = data['r'].df.head(data['size_lim'])
+
+    # process the data
+    data['tuples'], data['ranked_values'], data['decision_attribute'] = \
+        process_all(data['r'])
+    tuples = data['tuples']
+
+    # determine the distances
+    protected_attr_name = tuples.columns[0]
+    protected_attr_val = tuples[protected_attr_name][0]
+    data['protected_attributes'] = {protected_attr_name: [protected_attr_val]}
+    data['dist_mat'] = calc_dist_mat(data['tuples'], data['ranked_values'],
+                                     data['r'].attribute_types,
+                                     data['decision_attribute'],
+                                     data['protected_attributes'])
+
+    # apply the situation testing algorithm with knn
+    data['k'] = 4
+    data['valid_tuples'] = knn_situation(data['k'], data['tuples'],
+                                         data['dist_mat'],
+                                         data['protected_attributes'],
+                                         data['decision_attribute'])
+    data['csv_fname'] = csv_fname
+    data['path'] = app.config['UPLOAD_FOLDER']
+
+    # remove unused elements in UI
+    if 'neighbor_tbl' in data:
+        del data['neighbor_tbl']
+    if 'neighbor_col' in data:
+        del data['neighbor_col']
+
+    data['plot'] = False
+
+    return redirect('/dynamic')
 
 
 @app.route('/new_contour', methods=['POST'])
@@ -118,7 +179,6 @@ def add_contour():
     # add the contour to the contours in data
     data['contours'].append(contour)
 
-
     # create the contour html for contour removal
     data['contour_html'] = get_contour_html(data['contour_names'])
 
@@ -146,13 +206,16 @@ def add_contour():
 
 @app.route('/dynamic')
 def dynamic_site():
-    attrs = list(tuples.columns)
-    return render_template('dynamic.html', attrs=attrs)
+    attrs = list(data['tuples'].columns)
+    return render_template('situation-testing-form.html', attrs=attrs)
 
 
 @app.route('/dynamic', methods=['POST'])
 def dynamic_post():
-    global r, path, csv_fname, data
+    global data
+    r = data['r']
+    path = data['path']
+    csv_fname = data['csv_fname']
     form = request.form
     k, protected_attrs, decision_attr, attrs_to_ignore = handle_situation_form(
         form, r)
@@ -174,16 +237,28 @@ def dynamic_post():
     with open(path + json_fname, 'w') as f:
         json.dump(new_json_data, f)
 
-    fig, data_pts, valid_tuples, table_ls = calc_fig(path, json_fname,
-                                                     csv_fname,
-                                                     protected_attrs,
-                                                     attrs_to_ignore, k)
+    fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
+        contour_form, contour_form_options, features, attr_types_dict, \
+        used_colors_idcs, ordinal_attr_dict = calc_fig(path, json_fname,
+                                                       csv_fname,
+                                                       protected_attrs,
+                                                       attrs_to_ignore, k)
 
-    data['fig'] = fig
     data['table'] = table_ls
+    data['fig'] = fig
     data['data_pts'] = data_pts
+    data['contour_names'] = contour_names
+    data['contours'] = contours
+    data['contour_html'] = contour_html
+    data['contour_form'] = contour_form
+    data['contour_form_options'] = contour_form_options
+    data['used_colors_idcs'] = used_colors_idcs
+    data['features'] = features
+    data['feature_types_dict'] = attr_types_dict
+    data['ordinal_attr_dict'] = ordinal_attr_dict
     data['valid_tuples'] = valid_tuples
     data['click_shapes'] = list()
+    data['plot'] = True
 
     return redirect('/dashapp')
 
@@ -289,16 +364,24 @@ path = 'data/'
 json_fname = 'german_credit_data.json'
 csv_fname = 'german_credit_data_class.csv'
 r = read_data(path + json_fname, path + csv_fname)
+data['r'] = r
 
 # process the data
 tuples, ranked_values, decision_attribute = process_all(r)
+data['tuples'] = tuples
+data['ranked_values'] = ranked_values
+data['decision_attribute'] = decision_attribute
 
 # determine the distances
 protected_attributes = {"Sex": ["female"]}
+data['protected_attributes'] = protected_attributes
 dist_mat = calc_dist_mat(tuples, ranked_values, r.attribute_types,
                          decision_attribute, protected_attributes)
+data['dist_mat'] = dist_mat
 
 # apply the situation testing algorithm with knn
 k = 4
+data['k'] = k
 valid_tuples = knn_situation(k, tuples, dist_mat, protected_attributes,
                              decision_attribute)
+data['valid_tuples'] = valid_tuples

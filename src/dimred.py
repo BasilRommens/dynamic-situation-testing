@@ -144,21 +144,25 @@ def calc_bw_weights(data_pts, bw):
 
 
 if __name__ == '__main__':
-    # german credit dataset
-    path = 'data/'
-    json_fname = 'german_credit_data.json'
-    csv_fname = 'german_credit_data_class.csv'
-    protected_attributes = {"Sex": ["female"]}
-    ignore_cols = ['Class', 'Sex']
-    # # adult dataset
+    # # german credit dataset
     # path = 'data/'
-    # json_fname = 'adult.json'
-    # csv_fname = 'adult.csv'
-    # protected_attributes = {"sex": ["female"]}
-    # ignore_cols = ['class', 'sex']
+    # json_fname = 'german_credit_data.json'
+    # csv_fname = 'german_credit_data_class.csv'
+    # protected_attributes = {"Sex": ["female"]}
+    # class_col = 'Class'
+    # ignore_cols = ['Class', 'Sex']
+    # adult dataset
+    path = 'data/'
+    json_fname = 'adult.json'
+    csv_fname = 'adult.csv'
+    protected_attributes = {"sex": ["Female"]}
+    class_col = 'class'
+    ignore_cols = ['native-country']
 
     # read the data from the csv and json file
     r = read_data(path + json_fname, path + csv_fname)
+    r.df = r.df.head(200)
+    r.df = r.df.drop(columns=ignore_cols)
     print('read data')
 
     # process the data
@@ -187,17 +191,18 @@ if __name__ == '__main__':
     all_tuple_markers = get_tuple_discrimination_type(valid_tuples, tuples)
 
     # german credit dataset
-    df = pd.read_csv('data/german_credit_data_class.csv')
+    df = pd.read_csv(path + csv_fname)
+    df = df.head(200)
     og_df = df.copy()
     sensitive_tuple_idxs = get_tuples_with_attr(df, protected_attributes)
     df = make_numeric(df, r.ordinal_attribute_values)
-    class_col = df['Class']
+    class_col = df[class_col]
     class_colors = [colors_string[1] if c == 1.0 else colors_string[2] for c in
                     class_col]
     df = df.drop(columns=ignore_cols)
 
     # bounds for different columns
-    segment_dict_ls = [{'Credit amount': (6000, 20_000)}]
+    segment_dict_ls = []
 
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew-open',

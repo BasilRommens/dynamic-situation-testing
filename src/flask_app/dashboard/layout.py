@@ -23,7 +23,7 @@ html_layout = """
     <div class="container-fluid">
         <a class="navbar-brand" href="/">Discrimination Tool</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="/"
+                data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false"
                 aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -42,10 +42,15 @@ html_layout = """
                     <a class="nav-link"
                        href="/dashapp">Dash App</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/upload">Upload</a>
+                </li>
             </ul>
         </div>
     </div>
 </nav>
+
 
             
             <div class="container-fluid">

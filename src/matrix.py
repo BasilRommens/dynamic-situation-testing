@@ -73,8 +73,14 @@ class Matrix:
         feature_ls = [self.elements[col].values
                       for col in self.elements.columns]
 
+        # convert all nan values to 0
+        feature_ls = np.nan_to_num(feature_ls, 0)
+
         # calculate the distances between the V vectors
         distances = scs.distance.pdist(feature_ls, 'correlation')
+
+        # replace the missing distances with the largest distance
+        distances = np.nan_to_num(distances, max(distances))
 
         # convert the distances to a square matrix
         distances = scs.distance.squareform(distances)
@@ -96,6 +102,10 @@ class Matrix:
         interval_size_instances = max_instances - min_instances
         instances_ls -= min_instances
         instances_ls /= interval_size_instances
+
+        # replace all nans to 0
+        instances_ls = np.nan_to_num(instances_ls, 0)
+
         return instances_ls.T
 
         # legacy code
@@ -136,6 +146,9 @@ class Matrix:
         interval_size_instances = max_instances - min_instances
         instances_ls -= min_instances
         instances_ls /= interval_size_instances
+
+        # replace all nans with 0
+        instances_ls = np.nan_to_num(instances_ls, 0)
 
         return instances_ls
 

@@ -49,15 +49,15 @@ def kde_segment(data, segment_dict, color, segment_name, weights=None):
     # create the plotly figure
     figure = go.FigureWidget()
     # go over all paths and combine them into on
-    for path in og_fig.collections[-2].get_paths():
+    for i, path in enumerate(og_fig.collections[-2].get_paths()):
         vertices = path.vertices  # the vertices of the path
         figure = figure.add_trace(
             go.Scatter(x=vertices[:, 0], y=vertices[:, 1],
                        fill="toself", fillcolor=color,
-                       line=dict(width=0), opacity=0.1))
+                       line=dict(width=0), opacity=0.1,
+                       showlegend=not i, name=segment_name))
 
-    figure.update_traces(legendgroup=segment_name,
-                         legendgrouptitle_text=segment_name)
+    figure.update_traces(legendgroup=segment_name)
     return figure
 
 

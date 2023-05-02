@@ -11,6 +11,34 @@ click_shapes = list()
 
 
 def serve_layout():
+    # if there is the plot key, and it is set to false then no plot is drawn
+    # add a link to dynamic page
+    if 'plot' in data and not data['plot']:
+        return html.Div([
+            dbc.Container([
+                dbc.Row([
+                    dbc.Col(
+                        html.H3('Discrimination Plot'),
+                    )
+                ], class_name='mt-3'),
+                dbc.Row([
+                    dbc.Col(
+                        html.P('There is nothing to plot')
+                    )
+                ], class_name='mt-3'),
+                dbc.Row([
+                    dbc.Col(
+                        html.A('Go to Dynamic Page',
+                               href='/dynamic',
+                               className='btn btn-primary mt-3'),
+                        width=2
+                    )
+                ], class_name='my-3'),
+            ]),
+            dcc.Store(id='graph_store_layout'),
+            dcc.Store(id='graph_store_style'),
+        ])
+
     graph = [
         html.H3("Discrimination Plot"),
         dcc.Graph(
@@ -20,8 +48,9 @@ def serve_layout():
             style={
                 'display': 'inline-block'}
         )]
+
     contour_form = [
-        html.H3("Add Contours"),
+        html.H3("Add Contours", className='mt-2'),
         html.Form(
             data['contour_form'],
             id="form",
@@ -40,8 +69,28 @@ def serve_layout():
                              [{"name": key, "id": key}
                               for key in
                               data['table'][0].keys()],
-                             id='tbl'),
+                             id='tbl')
+        if len(data['table']) > 0 else
+        dash_table.DataTable(id='tbl'),
     ]
+    neighbor_table = [html.H3("Table of Neighboring Tuples")]
+    if 'neighbor_tbl' in data:
+        neighbor_table.append(
+            html.Div(
+                children=dash_table.DataTable(data['neighbor_tbl'],
+                                              data['neighbor_cols'],
+                                              id='neighbor_tbl'),
+                id='neighbor_div',
+                className='mb-3',
+            )
+        )
+    else:
+        # TODO clean this up by adding grey text
+        neighbor_table.append(
+            html.Div(
+                'No neighboring tuples. Select before seeing a table of neighboring tuples.',
+                id='neighbor_div'))
+
     return html.Div([
         dbc.Container([
             dbc.Row([
@@ -51,9 +100,12 @@ def serve_layout():
                     dbc.Row(dbc.Col()),
                     dbc.Row(dbc.Col(contour_rm_btns),
                             class_name="position-absolute bottom-0 start-0")
-                ], width=4, class_name="position-relative")
+                ], width=4, class_name="position-relative",
+                    style={'background-color': '#f8f9fa',
+                           'corner-radius': '5px'})
             ], class_name='mt-3'),
-            dbc.Row(dbc.Col(table, align='end'))
+            dbc.Row(dbc.Col(neighbor_table), className='mb-3'),
+            dbc.Row(dbc.Col(table), class_name='mb-3'),
         ]),
         dcc.Store(id='graph_store_layout'),
         dcc.Store(id='graph_store_style'),
@@ -110,19 +162,20 @@ def init_callbacks(dash_app):
         return relayout_data
 
     @dash_app.callback(
-        Output("graph", "figure", allow_duplicate=True),
-        Input("graph", "clickData"),
-        prevent_initial_call=True
+        [Output("graph", "figure", allow_duplicate=True),
+         Output("neighbor_div", "children"), ],
+        [Input("graph", "clickData")],
+        prevent_initial_call=True,
     )
     def update_click(clickData):
         global data
 
         if clickData is None:
-            return no_update
+            return no_update, no_update, no_update
 
         pt = clickData["points"][0]
         if 'hovertext' not in pt.keys():
-            return no_update
+            return no_update, no_update, no_update
 
         pt_coords = pt['x'], pt['y']
         pt_idx = data['data_pts'][(data['data_pts']['x'] == pt_coords[0]) & (
@@ -136,9 +189,44 @@ def init_callbacks(dash_app):
                 prot_pts = list(dict(valid_tuple[2]).keys())
                 unprot_pts = list(dict(valid_tuple[3]).keys())
 
+        # list containing all information of the neighbors
+        neighbors = list()
+
+        # information about the protected neighbors of the current
+        for prot_pt in prot_pts:
+            prot_pt_data = data['data_pts'].iloc[prot_pt].to_dict()
+            del prot_pt_data['x']
+            del prot_pt_data['y']
+            prot_pt_data['is_protected'] = 'protected'
+            neighbors.append(prot_pt_data)
+
+        # information of all the unprotected neighbors
+        for unprot_pt in unprot_pts:
+            unprot_pt_data = data['data_pts'].iloc[unprot_pt].to_dict()
+            del unprot_pt_data['x']
+            del unprot_pt_data['y']
+            unprot_pt_data['is_protected'] = 'unprotected'
+            neighbors.append(unprot_pt_data)
+        # add the current data point also to the neighbors
+        data_pt = data['data_pts'].iloc[pt_idx].to_dict()
+        del data_pt['x']
+        del data_pt['y']
+        data_pt['is_protected'] = 'selected point'
+        neighbors.insert(0, data_pt)
+
+        # set the neighbor table in the data dictionary
+        data['neighbor_tbl'] = neighbors
+
+        # set the columns in the data dictionary
+        data['neighbor_cols'] = [{'name': i, 'id': i} for i in
+                                 data['neighbor_tbl'][0].keys()]
+        neighbor_tbl = dash_table.DataTable(data=data['neighbor_tbl'],
+                                            columns=data['neighbor_cols'],
+                                            id='neighbor_tbl')
+
         # if the point isn't a sensitive tuple, return the figure
         if not len(prot_pts) and not len(unprot_pts):
-            return no_update
+            return no_update, no_update, no_update
 
         # clear all the line shapes
         data['fig']['layout']['shapes'] = list()
@@ -163,15 +251,16 @@ def init_callbacks(dash_app):
 
         # add the lines to the figure
         data['fig']['layout']['shapes'] = temp_fig['layout']['shapes']
-        # add the lines to the figure
+
+        # add the shapes to the click shapes
         data['click_shapes'] = temp_fig['layout']['shapes']
 
-        return data['fig']
+        return data['fig'], neighbor_tbl
 
     @dash_app.callback(
         Output("graph", "figure"),
-        Input("graph", "hoverData"),
-        [State("graph_store_layout", "data"),
+        [Input("graph", "hoverData"),
+         State("graph_store_layout", "data"),
          State("graph_store_style", "data")],
     )
     def update_hover(hoverData, graph_store_layout, graph_store_style):
