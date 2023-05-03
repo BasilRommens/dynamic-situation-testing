@@ -1,0 +1,31 @@
+{
+  "_comment1": "The attribute types are nominal, ordinal, and interval",
+  "attribute_types": {
+    "_interval_comment": "Interval variables have a numerical value and have an order",
+    "Age": "interval",
+    "_nominal_comment": "Nominal variables can be divided into different categories",
+    "Sex": "nominal",
+    "_ordinal_comment": "Ordinal variables can be divided into different categories and have an order",
+    "Saving accounts": "ordinal",
+    "Class": "interval"
+  },
+  "_comment2": "ordinal variables typically still need to be converted to numerical values to be able to be ordered",
+  "ordinal_attribute_values": {
+    "Checking account": {
+      "_comment": "0 is the lowest value, and from that we go up",
+      "little": 0,
+      "moderate": 1,
+      "quite rich": 2,
+      "rich": 3
+    }
+  },
+  "_comment3": "The variables to ignore aren't relevant for decision making",
+  "attributes_to_ignore": [
+  ],
+  "_comment4": "The variable name and its value used to make decisions",
+  "decision_attribute": {
+    "Class": 0
+  },
+  "_comment5": "The value that unknown values can be",
+  "unknowns": ["NA"]
+}

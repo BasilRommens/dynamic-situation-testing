@@ -22,9 +22,21 @@ def scatter_plot(data, hover_data=None, text=None, size=None,
     new_scatter = go.Scatter(x=data['x'], y=data['y'], mode='markers+text',
                              hoverinfo='text', hovertext=hover_data,
                              text=text, textposition=text_position,
-                             name=name,
+                             name=name, opacity=1,
                              marker=dict(color=color, symbol=symbol, size=size,
-                                         line=dict(width=width)))
+                                         line=dict(width=width, color=color)))
+    # if the symbol doesn't have a fill then add a thicker background with
+    # another color
+    if symbol is not None and symbol[0] in ['cross-thin', 'line-ew']:
+        bg_scatter = go.Scatter(x=data['x'], y=data['y'], mode='markers+text',
+                                hoverinfo='text', hovertext=hover_data,
+                                text=text, textposition=text_position,
+                                name=name, opacity=1,
+                                marker=dict(symbol=symbol, size=size,
+                                            line=dict(width=2 * width, color='white')),
+                                showlegend=False)
+        fig.add_trace(bg_scatter)
+
     fig.add_trace(new_scatter)
 
     return fig

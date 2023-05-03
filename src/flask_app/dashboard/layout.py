@@ -16,12 +16,16 @@ html_layout = """
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css">
     <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
+    <script src="https://kit.fontawesome.com/c42acb1891.js"
+            crossorigin="anonymous"></script>
+            
+        <link rel="stylesheet" type="text/css" href="/static/style.css">
         </head>
         <body>
             
 <nav class="navbar navbar-expand-lg bg-light">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">Discrimination Tool</a>
+        <a class="navbar-brand" href="/upload">Discrimination Tool</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false"
@@ -31,25 +35,22 @@ html_layout = """
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page"
-                       href="/"><b>Home</b></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       href="/dynamic">Dynamic</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       href="/dashapp">Dash App</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link"
                        href="/upload">Upload</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/situation-testing-form">Situation Testing Form</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/plot">Plot</a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
+
 
 
             

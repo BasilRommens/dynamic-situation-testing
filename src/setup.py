@@ -1,6 +1,7 @@
 import time
 
 import dash_bootstrap_components as dbc
+import dash_dangerously_set_inner_html
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -90,9 +91,9 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
     segment_dict_ls = []
 
     # symbol map
-    symbol_map = {'negative discrimination': 'line-ew-open',
+    symbol_map = {'negative discrimination': 'line-ew',
                   'neutral': 'circle',
-                  'positive discrimination': 'cross-thin-open',
+                  'positive discrimination': 'cross-thin',
                   'sensitive': 'circle'}
 
     # construct a distance matrix
@@ -129,13 +130,13 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
 def sort_color_marker_pair(pair):
     match pair[0]:
         case 'positive discrimination':
-            return 0
-        case 'negative discrimination':
-            return 1
-        case 'sensitive':
-            return 2
-        case 'neutral':
             return 3
+        case 'negative discrimination':
+            return 2
+        case 'sensitive':
+            return 1
+        case 'neutral':
+            return 0
 
 
 def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
@@ -183,7 +184,7 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
                                              symbol_map=symbol_map,
                                              color=np.array(
                                                  colors_same_marker_color),
-                                             size=[10] * len(indices), width=2,
+                                             size=[10] * len(indices), width=4,
                                              name=marker_color_pair_name)
         # add this to the scatter data figure
         scatter_data = dynamic.combine_plots(scatter_data, _scatter_data)
@@ -207,7 +208,7 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
         data_pts.iloc[sensitive_tuple_idxs],
         symbol=['sensitive'] * len(sensitive_tuple_idxs),
         symbol_map={'sensitive': 'circle'},
-        color=['grey'] * len(sensitive_tuple_idxs),
+        color=['#aaaaaa'] * len(sensitive_tuple_idxs),
         size=[20] * len(sensitive_tuple_idxs),
         name='Sensitive Tuples')
 
@@ -239,6 +240,9 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
 
     # set the theme of the plot
     scatter_final = dynamic.set_theme(scatter_final, 'plotly_white')
+
+    # set the margins of the plot to 10
+    scatter_final.update_layout(margin=dict(l=10, r=10, b=10, t=10))
 
     return scatter_final, contour_names, segment_dict_ls, used_colors_idcs
 
@@ -291,9 +295,6 @@ def calc_table(data_pts, valid_tuples):
     for i, valid_tuple in enumerate(valid_tuples):
         data_pt_idx = valid_tuple[0]
         score = valid_tuple[1]
-        # TODO do something with this information
-        protected = valid_tuple[2]
-        unprotected = valid_tuple[3]
 
         # get the data point
         data_pt = data_pts.iloc[data_pt_idx].to_dict()
@@ -301,21 +302,29 @@ def calc_table(data_pts, valid_tuples):
         # add score
         data_pt['score'] = score
 
+        # remove the x, y and type values
+        del data_pt['x']
+        del data_pt['y']
+        del data_pt['type']
+
         table_ls.append(data_pt)
 
     return table_ls
 
 
 def get_contour_html(contour_names):
-    title = html.H3('Remove Contours', className='mx-2')
-    contour_html = [html.Form(dbc.Input(id=f'contour_{i}',
-                                        value=contour_name,
-                                        class_name="btn btn-danger mr-2 my-2",
-                                        type="submit"),
-                              action=f'/remove_contour/{i}',
-                              method='POST',
-                              id=f'form_contour_{i}', )
-                    for i, contour_name in enumerate(contour_names)]
+    title = html.H4('Remove Contours', className='mx-2')
+    contour_html = [html.Form(dbc.Button(
+        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+            f'<i class="fas fa-times"></i> {contour_name}'),
+        id=f'contour_{i}',
+        value=contour_name,
+        class_name="btn btn-danger mx-2 my-2",
+        type="submit"),
+        action=f'/remove_contour/{i}',
+        method='POST',
+        id=f'form_contour_{i}', )
+        for i, contour_name in enumerate(contour_names)]
 
     if len(contour_html):
         contour_html.insert(0, title)
@@ -367,9 +376,10 @@ def construct_contour_form(features, feature_values, feature_types,
             ]) for idx, feature in enumerate(features)
     ]
     return [
+        html.Label('Select Variable', htmlFor='feature'),
         html.Div(dbc.Select(id='feature', options=options, ), className='mb-2'),
         html.Div(id='featureOptions'),
-        html.Button('Add', type='submit',
+        html.Button([html.I(className="fas fa-plus"), ' Add'], type='submit',
                     className='btn btn-success mt-2')], option_forms
 
 
@@ -415,13 +425,15 @@ def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
     return scatter_final, preplotting_data[8], fig_data[
         0], table_ls, contour_names, contours, contour_html, contour_form, \
         contour_form_options, list(
-        features), attr_types_dict, used_colors_idcs, ordinal_attr_dict
+        features), attr_types_dict, used_colors_idcs, ordinal_attr_dict, \
+        fig_data[5]
 
 
 # calculate the figure to be used
 fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
     contour_form, contour_form_options, features, attr_types_dict, \
-    used_colors_idcs, ordinal_attr_dict = calc_german_credit_fig()
+    used_colors_idcs, ordinal_attr_dict, dist_mat = calc_german_credit_fig()
+
 data['table'] = table_ls
 data['fig'] = fig
 data['data_pts'] = data_pts
@@ -437,3 +449,5 @@ data['ordinal_attr_dict'] = ordinal_attr_dict
 data['valid_tuples'] = valid_tuples
 data['click_shapes'] = list()
 data['csv_fname'] = None
+data['plot_name'] = 'German Credit Dataset'
+data['dist_mat'] = dist_mat

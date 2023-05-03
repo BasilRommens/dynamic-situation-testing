@@ -13,58 +13,20 @@ from inout import read_data
 from knn import calc_dist_mat, knn_situation
 from process import process_all
 from setup import calc_fig, data, get_contour_html
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, send_from_directory
 from viz import dynamic
+
+
+@app.route('/download/<string:filename>')
+def download(filename):
+    data_path = os.path.join(os.getcwd(), app.config['DATA_FOLDER'])
+    return send_from_directory(directory=data_path, path=filename,
+                               as_attachment=True, environ=request.environ)
 
 
 @app.route('/')
 def home():
     return redirect('/upload')
-
-    global data
-
-    valid_tuples = data['valid_tuples']
-    headers = sorted(list(tuples.columns))
-    headers.insert(0, 'Score')
-
-    new_tuples = list()
-    # create a new tuple with the score and the k nearest neighbors along with
-    # its own values
-    for tuple_idx, score, k_prot, k_unprot in valid_tuples:
-        # sort the tuple by the attribute name and then only take the values
-        new_tuple = list(map(lambda x: x[1], sorted(
-            list(tuples.iloc[tuple_idx].to_dict().items()),
-            key=lambda x: x[0])))
-        # insert the score at the beginning of the tuple
-        new_tuple.insert(0, score)
-
-        # sort the tuple by the attribute name and then only take the values
-        # but now for the k nearest neighbors of the protected group
-        new_k_prot = list()
-        for prot_idx, _ in k_prot:
-            new_prot_el = list(map(lambda x: x[1], sorted(
-                list(tuples.iloc[prot_idx].to_dict().items()),
-                key=lambda x: x[0])))
-            new_prot_el.insert(0, 'protected')
-            new_k_prot.append(new_prot_el)
-
-        # sort the tuple by the attribute name and then only take the values
-        # but now for the k nearest neighbors of the unprotected group
-        new_k_unprot = list()
-        for unprot_idx, _ in k_unprot:
-            new_unprot_el = list(map(lambda x: x[1], sorted(
-                list(tuples.iloc[unprot_idx].to_dict().items()),
-                key=lambda x: x[0])))
-            new_unprot_el.insert(0, 'unprotected')
-            new_k_unprot.append(new_unprot_el)
-
-        # create a triple tuple
-        new_tuple = (new_tuple, new_k_prot, new_k_unprot)
-
-        # add the new tuple
-        new_tuples.append(new_tuple)
-
-    return render_template('home.html', items=new_tuples, headers=headers)
 
 
 @app.route('/upload')
@@ -85,6 +47,9 @@ def upload_post():
     json_fname = secure_filename(json_f.filename)
     json_path_fname = os.path.join(app.config['UPLOAD_FOLDER'], json_fname)
     json_f.save(json_path_fname)
+
+    plot_name = request.form['plot-name']
+    data['plot_name'] = plot_name if plot_name else csv_fname[:-4] + ' Plot'
 
     # TODO make this cleaner
     # read the data from the csv and json file
@@ -122,7 +87,7 @@ def upload_post():
 
     data['plot'] = False
 
-    return redirect('/dynamic')
+    return redirect('/situation-testing-form')
 
 
 @app.route('/new_contour', methods=['POST'])
@@ -133,7 +98,7 @@ def add_contour():
 
     # if the form is empty return
     if not len(form):
-        return redirect('/dashapp')
+        return redirect('/plot')
 
     # feature name
     feat_name = list(form.keys())[0]
@@ -201,23 +166,23 @@ def add_contour():
     # set plotly white theme
     data['fig'] = dynamic.set_theme(new_fig, 'plotly_white')
 
-    return redirect('/dashapp')
+    return redirect('/plot')
 
 
-@app.route('/dynamic')
-def dynamic_site():
+@app.route('/situation-testing-form')
+def situation_testing_form():
     attrs = list(data['tuples'].columns)
     return render_template('situation-testing-form.html', attrs=attrs)
 
 
-@app.route('/dynamic', methods=['POST'])
-def dynamic_post():
+@app.route('/situation-testing-form', methods=['POST'])
+def situation_testing_form_post():
     global data
     r = data['r']
     path = data['path']
     csv_fname = data['csv_fname']
     form = request.form
-    k, protected_attrs, decision_attr, attrs_to_ignore = handle_situation_form(
+    k, protected_attrs, decision_attr, attrs_to_ignore = handle_situation_testing_form(
         form, r)
 
     # create new json file
@@ -239,10 +204,12 @@ def dynamic_post():
 
     fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
         contour_form, contour_form_options, features, attr_types_dict, \
-        used_colors_idcs, ordinal_attr_dict = calc_fig(path, json_fname,
-                                                       csv_fname,
-                                                       protected_attrs,
-                                                       attrs_to_ignore, k)
+        used_colors_idcs, ordinal_attr_dict, dist_mat = calc_fig(path,
+                                                                 json_fname,
+                                                                 csv_fname,
+                                                                 protected_attrs,
+                                                                 attrs_to_ignore,
+                                                                 k)
 
     data['table'] = table_ls
     data['fig'] = fig
@@ -258,9 +225,10 @@ def dynamic_post():
     data['ordinal_attr_dict'] = ordinal_attr_dict
     data['valid_tuples'] = valid_tuples
     data['click_shapes'] = list()
+    data['dist_mat'] = dist_mat
     data['plot'] = True
 
-    return redirect('/dashapp')
+    return redirect('/plot')
 
 
 @app.route('/remove_contour/<int:contour_id>', methods=['POST'])
@@ -303,8 +271,8 @@ def remove_contours(contour_id: int):
     # regenerate the list of buttons in the dash app
     data['contour_html'] = get_contour_html(data['contour_names'])
 
-    # redirect to /dashapp to show the figure
-    return redirect('/dashapp')
+    # redirect to /plot to show the figure
+    return redirect('/plot')
 
 
 def get_knn_els(knn_els, tuples, el_name):
@@ -320,7 +288,7 @@ def get_knn_els(knn_els, tuples, el_name):
     return new_knn_els
 
 
-def handle_situation_form(form, r):
+def handle_situation_testing_form(form, r):
     k = None
     decision_attr = [None, None]
     sensitive_attr_vars = list()

@@ -205,9 +205,9 @@ if __name__ == '__main__':
     segment_dict_ls = []
 
     # symbol map
-    symbol_map = {'negative discrimination': 'line-ew-open',
+    symbol_map = {'negative discrimination': 'line-ew',
                   'neutral': 'circle',
-                  'positive discrimination': 'cross-thin-open',
+                  'positive discrimination': 'cross-thin',
                   'sensitive': 'circle'}
 
     # # auto mpg data set
@@ -283,6 +283,7 @@ if __name__ == '__main__':
     data_pts = pd.DataFrame(dim_red_samples[:n_d_pts], columns=['x', 'y'])
     data_pts['type'] = 0
     data_pts = pd.concat([data_pts, og_df], axis=1)
+
     # feature points
     feat_pts = pd.DataFrame(dim_red_samples[n_d_pts:], columns=['x', 'y'])
     feat_pts['type'] = 2

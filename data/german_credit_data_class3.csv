@@ -1,0 +1,102 @@
+Age,Sex,Job,Housing,Saving accounts,Checking account,Credit amount,Duration,Purpose,Class
+67,male,2,own,NA,little,1169,6,radio/TV,0
+22,female,2,own,little,moderate,5951,48,radio/TV,1
+49,male,1,own,little,NA,2096,12,education,1
+45,male,2,free,little,little,7882,42,furniture/equipment,1
+53,male,2,free,little,little,4870,24,car,0
+35,male,1,free,NA,NA,9055,36,education,1
+53,male,2,own,quite rich,NA,2835,24,furniture/equipment,0
+35,male,3,rent,little,moderate,6948,36,car,0
+61,male,1,own,rich,NA,3059,12,radio/TV,1
+28,male,3,own,little,moderate,5234,30,car,1
+25,female,2,rent,little,moderate,1295,12,car,0
+24,female,2,rent,little,little,4308,48,business,0
+22,female,2,own,little,moderate,1567,12,radio/TV,0
+60,male,1,own,little,little,1199,24,car,0
+28,female,2,rent,little,little,1403,15,car,0
+32,female,1,own,moderate,little,1282,24,radio/TV,0
+53,male,2,own,NA,NA,2424,24,radio/TV,1
+25,male,2,own,NA,little,8072,30,business,1
+44,female,3,free,little,moderate,12579,24,car,0
+31,male,2,own,quite rich,NA,3430,24,radio/TV,0
+48,male,2,own,little,NA,2134,9,car,1
+44,male,2,rent,quite rich,little,2647,6,radio/TV,1
+48,male,1,rent,little,little,2241,10,car,0
+44,male,2,own,moderate,moderate,1804,12,car,0
+26,male,2,own,NA,NA,2069,10,furniture/equipment,1
+36,male,1,own,little,little,1374,6,furniture/equipment,0
+39,male,1,own,little,NA,426,6,radio/TV,1
+42,female,2,rent,rich,rich,409,12,radio/TV,1
+34,male,2,own,little,moderate,2415,7,radio/TV,1
+63,male,2,own,little,little,6836,60,business,0
+36,male,2,own,rich,moderate,1913,18,business,1
+27,male,2,own,little,little,4020,24,furniture/equipment,0
+30,male,2,own,moderate,moderate,5866,18,car,0
+57,male,1,rent,NA,NA,1264,12,business,1
+33,female,3,own,little,rich,1474,12,furniture/equipment,0
+25,male,1,own,little,moderate,4746,45,radio/TV,0
+31,male,2,free,little,NA,6110,48,education,0
+37,male,2,own,little,rich,2100,18,radio/TV,1
+37,male,2,own,little,rich,1225,10,domestic appliances,1
+24,male,2,own,little,moderate,458,9,radio/TV,1
+30,male,3,own,quite rich,NA,2333,30,radio/TV,1
+26,male,2,own,quite rich,moderate,1158,12,radio/TV,0
+44,male,1,own,little,moderate,6204,18,repairs,0
+24,male,2,rent,moderate,little,6187,30,car,0
+58,female,1,free,little,little,6143,48,car,0
+35,female,3,own,little,NA,1393,11,car,1
+39,male,2,own,quite rich,NA,2299,36,radio/TV,1
+23,female,0,rent,quite rich,little,1352,6,car,1
+39,male,1,own,little,NA,7228,11,car,0
+28,female,2,own,moderate,NA,2073,12,radio/TV,1
+29,male,1,own,NA,moderate,2333,24,furniture/equipment,0
+30,male,3,own,little,moderate,5965,27,car,0
+25,male,2,own,little,NA,1262,12,radio/TV,1
+31,male,2,own,NA,NA,3378,18,car,1
+57,male,2,free,little,moderate,2225,36,car,0
+26,male,1,own,NA,NA,783,6,car,1
+52,male,3,own,NA,moderate,6468,12,radio/TV,1
+31,female,2,own,little,NA,9566,36,radio/TV,0
+23,female,3,own,little,rich,1961,18,car,1
+23,female,1,rent,little,little,6229,36,furniture/equipment,1
+27,male,2,own,little,moderate,1391,9,business,1
+50,male,2,own,NA,moderate,1537,15,radio/TV,0
+61,male,3,free,little,moderate,1953,36,business,0
+25,male,2,own,little,moderate,14421,48,business,0
+26,female,2,own,little,NA,3181,24,radio/TV,1
+48,male,2,own,NA,NA,5190,27,repairs,1
+29,female,2,own,little,NA,2171,12,radio/TV,1
+22,male,2,own,rich,moderate,1007,12,car,1
+37,male,2,free,little,NA,1819,36,education,0
+25,female,2,own,NA,NA,2394,36,radio/TV,1
+30,female,2,own,little,NA,8133,36,car,0
+46,male,1,rent,NA,NA,730,7,radio/TV,0
+51,male,3,free,little,little,1164,8,vacation/others,0
+41,female,1,own,little,moderate,5954,42,business,1
+40,male,3,own,NA,little,1977,36,education,0
+66,male,3,free,little,little,1526,12,car,1
+34,male,2,own,little,little,3965,42,radio/TV,1
+51,male,2,own,little,moderate,4771,11,radio/TV,1
+39,male,1,own,NA,NA,9436,54,car,0
+22,male,2,own,little,moderate,3832,30,furniture/equipment,1
+44,female,2,own,NA,NA,5943,24,radio/TV,1
+47,male,2,own,quite rich,NA,1213,15,radio/TV,1
+24,female,1,rent,moderate,NA,1568,18,business,0
+58,female,1,own,little,little,1755,24,vacation/others,0
+52,male,1,own,little,little,2315,10,radio/TV,0
+29,female,3,own,little,NA,1412,12,business,0
+27,female,2,own,little,moderate,1295,18,furniture/equipment,1
+47,male,2,free,moderate,moderate,12612,36,education,1
+30,male,3,own,moderate,little,2249,18,car,0
+28,male,2,own,little,little,1108,12,repairs,1
+56,male,2,own,little,NA,618,12,radio/TV,1
+54,male,2,own,little,little,1409,12,car,1
+33,female,1,own,NA,NA,797,12,radio/TV,0
+20,male,2,rent,NA,rich,3617,24,furniture/equipment,0
+54,male,2,own,rich,moderate,1318,12,car,1
+58,male,2,rent,little,moderate,15945,54,business,1
+61,female,2,own,NA,NA,2012,12,education,0
+34,male,2,own,moderate,moderate,2622,18,business,1
+36,male,2,own,little,moderate,2337,36,radio/TV,1
+36,male,3,rent,NA,moderate,7057,20,car,1
+53,female,2,rent,little,moderate,12730,50,business,0
