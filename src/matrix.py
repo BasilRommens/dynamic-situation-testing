@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import scipy.spatial as scs
+import scipy
 
 from process import make_numeric
 import seaborn as sns
@@ -12,7 +13,7 @@ eps = 1e-3
 
 class Matrix:
     def __init__(self, elements, heatmap_viz=False, DD=None, VV=None, VD=None,
-                 DV=None, feat_names=[]):
+                 DV=None, feat_names=[], attr_types=dict()):
         self.elements = elements
         self.heatmap_viz = heatmap_viz
         self.DD = DD
@@ -20,6 +21,7 @@ class Matrix:
         self.VD = VD
         self.DV = DV
         self.feat_names = feat_names
+        self.attr_types = attr_types
         self.matrix = self._construct_matrix(DD, VV, VD, DV)
 
     def _construct_matrix(self, DD, VV, VD, DV) -> np.ndarray:
@@ -64,6 +66,63 @@ class Matrix:
         distances = scs.distance.squareform(distances)
         return distances
 
+    def _nominal_nominal_corr(self, vec_nom1, vec_nom2):
+        # cramer's v correlation
+        return scipy.stats.chi2_contingency(pd.crosstab(vec_nom1, vec_nom2))[0]
+        pass
+
+    def _nominal_ordinal_corr(self, vec_nom, vec_ord):
+        # cramer's v correlation
+        return scipy.stats.chi2_contingency(pd.crosstab(vec_nom, vec_ord))[0]
+
+    def _nominal_interval_corr(self, vec_nom, vec_int):
+        # convert the vec int in as many bins as there are unique values in
+        # vec_nom
+        vec_int = pd.cut(vec_int, bins=len(np.unique(vec_nom)), labels=False)
+        # cramer's v correlation
+        return scipy.stats.chi2_contingency(pd.crosstab(vec_nom, vec_int))[0]
+
+    def _ordinal_ordinal_corr(self, vec_ord1, vec_ord2):
+        # spearman rho correlation
+        return scipy.stats.spearmanr(vec_ord1, vec_ord2)[0]
+
+    def _ordinal_interval_corr(self, vec_ord, vec_int):
+        # spearman rho correlation
+        return scipy.stats.spearmanr(vec_ord, vec_int)[0]
+
+    def _interval_interval_corr(self, vec_int1, vec_int2):
+        # pearson correlation
+        return scipy.stats.pearsonr(vec_int1, vec_int2)[0]
+
+    def _correlation(self, vec_idx1, vec_idx2, all_vecs, attr_names):
+        # get both vectors
+        vec1 = all_vecs[vec_idx1[0]]
+        vec2 = all_vecs[vec_idx2[0]]
+
+        # get the attribute types of the vectors
+        attr_type1 = self.attr_types[attr_names[vec_idx1[0]]]
+        attr_type2 = self.attr_types[attr_names[vec_idx2[0]]]
+
+        # big if else statement to determine the correlation
+        if attr_type1 == 'nominal' and attr_type2 == 'nominal':
+            return self._nominal_nominal_corr(vec1, vec2)
+        elif attr_type1 == 'nominal' and attr_type2 == 'ordinal':
+            return self._nominal_ordinal_corr(vec1, vec2)
+        elif attr_type1 == 'ordinal' and attr_type2 == 'nominal':
+            return self._nominal_ordinal_corr(vec2, vec1)
+        elif attr_type1 == 'nominal' and attr_type2 == 'interval':
+            return self._nominal_interval_corr(vec1, vec2)
+        elif attr_type1 == 'interval' and attr_type2 == 'nominal':
+            return self._nominal_interval_corr(vec2, vec1)
+        elif attr_type1 == 'ordinal' and attr_type2 == 'ordinal':
+            return self._ordinal_ordinal_corr(vec1, vec2)
+        elif attr_type1 == 'ordinal' and attr_type2 == 'interval':
+            return self._ordinal_interval_corr(vec1, vec2)
+        elif attr_type1 == 'interval' and attr_type2 == 'ordinal':
+            return self._ordinal_interval_corr(vec2, vec1)
+        elif attr_type1 == 'interval' and attr_type2 == 'interval':
+            return self._interval_interval_corr(vec1, vec2)
+
     def _construct_VV_mat(self) -> np.ndarray:
         """
         calculates the distance between each feature value vector
@@ -71,13 +130,18 @@ class Matrix:
         """
         # create the feature vectors in list form
         feature_ls = [self.elements[col].values
-                      for col in self.elements.columns]
+                      for col in self.feat_names]
+
+        # create an index list
+        idx_ls = [[i] for i in range(len(feature_ls))]
 
         # convert all nan values to 0
         feature_ls = np.nan_to_num(feature_ls, 0)
 
         # calculate the distances between the V vectors
-        distances = scs.distance.pdist(feature_ls, 'correlation')
+        distances = scs.distance.pdist(idx_ls, self._correlation,
+                                       all_vecs=feature_ls,
+                                       attr_names=self.feat_names)
 
         # replace the missing distances with the largest distance
         distances = np.nan_to_num(distances, max(distances))

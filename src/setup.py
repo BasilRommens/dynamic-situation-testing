@@ -97,7 +97,8 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
                   'sensitive': 'circle'}
 
     # construct a distance matrix
-    m = Matrix(df, heatmap_viz=False, feat_names=df.columns, DD=dist_mat)
+    m = Matrix(df, heatmap_viz=False, feat_names=df.columns, DD=dist_mat,
+               attr_types=r.attribute_types)
     dist_mat = m.merged_matrix()
 
     # dimensionality reduction using distance matrix

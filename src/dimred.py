@@ -144,20 +144,20 @@ def calc_bw_weights(data_pts, bw):
 
 
 if __name__ == '__main__':
-    # # german credit dataset
-    # path = 'data/'
-    # json_fname = 'german_credit_data.json'
-    # csv_fname = 'german_credit_data_class.csv'
-    # protected_attributes = {"Sex": ["female"]}
-    # class_col = 'Class'
-    # ignore_cols = ['Class', 'Sex']
-    # adult dataset
+    # german credit dataset
     path = 'data/'
-    json_fname = 'adult.json'
-    csv_fname = 'adult.csv'
-    protected_attributes = {"sex": ["Female"]}
-    class_col = 'class'
-    ignore_cols = ['native-country']
+    json_fname = 'german_credit_data.json'
+    csv_fname = 'german_credit_data_class.csv'
+    protected_attributes = {"Sex": ["female"]}
+    class_col = 'Class'
+    ignore_cols = []
+    # # adult dataset
+    # path = 'data/'
+    # json_fname = 'adult.json'
+    # csv_fname = 'adult.csv'
+    # protected_attributes = {"sex": ["Female"]}
+    # class_col = 'class'
+    # ignore_cols = ['native-country']
 
     # read the data from the csv and json file
     r = read_data(path + json_fname, path + csv_fname)
@@ -233,7 +233,8 @@ if __name__ == '__main__':
     # results = [colors_string[dim] for dim in range(6) for _ in range(100)]
 
     # construct a distance matrix
-    m = Matrix(df, heatmap_viz=False, feat_names=df.columns, DD=dist_mat)
+    m = Matrix(df, heatmap_viz=False, feat_names=df.columns, DD=dist_mat,
+               attr_types=r.attribute_types)
     dist_mat = m.merged_matrix()
 
     # show kde plot of flattened distance matrix
