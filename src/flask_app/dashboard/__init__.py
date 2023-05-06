@@ -1,8 +1,7 @@
 import dash
 import dash_dangerously_set_inner_html
 import plotly.graph_objects as go
-from dash import html, dcc, Output, Input, no_update, State, dash_table, ALL, \
-    MATCH
+from dash import html, dcc, Output, Input, no_update, State, dash_table
 import dash_bootstrap_components as dbc
 
 from flask_app.dashboard.layout import html_layout
@@ -41,6 +40,8 @@ def serve_layout():
         ])
 
     html_points = '<i class="fas fa-circle" style="color: #e69f00;"></i>, <i class="fas fa-circle" style="color: #56b4e9;"></i>, <i class="fas fa-plus" style="color: #56b4e9;"></i> or <i class="fas fa-minus" style="color: #56b4e9;"></i>'
+    plus = '<i class="fas fa-plus" style="color: #56b4e9;"></i>'
+    minus = '<i class="fas fa-minus" style="color: #56b4e9;"></i>'
     red_square = '<i class="fas fa-square" style="color: #d55e00;"></i>'
     green_square = '<i class="fas fa-square" style="color: #009e73;"></i>'
     graph = [
@@ -57,6 +58,11 @@ def serve_layout():
                             f'<b>Hover</b> over a point ({html_points}) to see its details and its linked neighbors'),
                         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
                             f'<b>Click</b> on a point ({html_points}) to lock the {red_square} <b>red</b> and {green_square} <b>green</b> links to the neighbors'),
+                        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                            f'{minus} Negative discrimination means that you have a positive score for a negative class value.'
+                            f' {plus} Positive discrimination means that your neighborhood of protected samples were mostly positevily evaluated.'
+                            f' If your a sample is close to a <i class="fas fa-circle"></i> variable point then it probably has a high value for that variable.'
+                        )
                     ]
                 ),
                 dbc.ModalFooter(
@@ -82,8 +88,8 @@ def serve_layout():
                 dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
                     f'''
                             <p>
-                                {red_square} <b>Red</b> = Sensitive,
-                                {green_square} <b>Green</b> = Not Sensitive
+                                {red_square} <b>Red</b> = Protected,
+                                {green_square} <b>Green</b> = Not Protected
                             </p>
                         '''
                 ), className="text-end align-middle",
@@ -119,11 +125,17 @@ def serve_layout():
     decision_attr_var = ''
     decision_attr_val = ''
     sensitive_attr_dict = dict()
+    red_circle = '<i class="fas fa-circle" style="color: #d55e00;"></i>'
+    green_circle = '<i class="fas fa-circle" style="color: #009e73;"></i>'
     table = [
         html.H4("Table of Discriminated Tuples", className='mt-3'),
-        html.P(
-            "The table below shows the tuples that have all the sensitive values () "
-            "and have the decision value ().",
+        html.Div(
+            dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                "The table below shows the tuples that have all the protected values "
+                "and have the decision value. When clicking on a value in a row "
+                f"the corresponding tuple will be highlighted in the plot with a {red_circle} red circle."
+            ),
+            className='mb-2',
         ),
         dash_table.DataTable(data['table'],
                              [{"name": key, "id": key}
@@ -138,21 +150,40 @@ def serve_layout():
     if 'neighbor_tbl' in data:
         neighbor_table.append(
             html.Div(
+                dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                    f"When clicking on a value in a row, the corresponding tuple will be highlighted in the plot with a {green_circle} green circle.",
+                ),
+                id='neighbor_txt',
+                className='mb-2',
+                style={'display': 'block'}
+            )
+        )
+        neighbor_table.append(
+            html.Div(
                 children=dash_table.DataTable(data['neighbor_tbl'],
                                               data['neighbor_cols'],
                                               id='neighbor_tbl'),
                 id='neighbor_div',
-                className='mb-3',
             )
         )
     else:
+        neighbor_table.append(
+            html.Div(
+                dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                    f"When clicking on a value in a row, the corresponding tuple will be highlighted in the plot with a {green_circle} green circle.",
+                ),
+                id='neighbor_txt',
+                style={'display': 'none'}
+            )
+        )
         # TODO clean this up by adding grey text
         neighbor_table.append(
             html.Div(
                 'No neighboring tuples. Select a tuple before seeing a table of neighboring tuples.',
                 id='neighbor_div',
-                className='mb-3',
-            ))
+                className='text-muted',
+            )
+        )
 
     return html.Div([
         dbc.Container([
@@ -160,6 +191,13 @@ def serve_layout():
                 dbc.Col(
                     html.H3(data['plot_name'], className='mt-3'),
                 )
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Situation Testing Variables & Values",
+                            className='mt-3'),
+                    data['situation_testing_html']
+                ])
             ]),
             dbc.Row([
                 dbc.Col(graph, width=8, className='mr-4'),
@@ -201,6 +239,123 @@ def init_dashboard(server):
 
 def init_callbacks(dash_app):
     global data
+
+    # table of neigboring tuples
+    @dash_app.callback(
+        Output('graph', 'figure', allow_duplicate=True),
+        Input('neighbor_tbl', 'active_cell'),
+        prevent_initial_call=True
+    )
+    def click_neighbor_table(active_cell):
+        global data
+
+        if active_cell is None:
+            return no_update
+
+        # get the clicked point in the graph
+        valid_tuple_click_pt = [(prot_tuples, unprot_tuples) for pt_idx, _, prot_tuples, unprot_tuples in data['valid_tuples'] if pt_idx == data['click_pt_idx']][0]
+
+        # get k to determine if the tuple is protected or unprotected
+        protected_len = len(valid_tuple_click_pt[0])
+
+        # remove 1 from the row as the first row is the clicked point
+        row = active_cell['row']
+
+        # if the row is greater than the protected length, then it is an
+        # unprotected tuple.
+        if row >= protected_len:
+            # Subtract the protected length to get the unprotected point
+            row -= protected_len
+            data_pts_row = valid_tuple_click_pt[1][row][0]  # unprotected point index
+        else:
+            data_pts_row = valid_tuple_click_pt[0][row][0]  # protected point index
+
+        # get the x, y coordinates
+        x = data['data_pts']['x'][data_pts_row]
+        y = data['data_pts']['y'][data_pts_row]
+
+        # update the figure with an added marker at the selected point
+        fig = data['fig']
+
+        # remove all the traces that contain marked as legend group
+        fig['data'] = [trace for trace in fig['data']
+                       if trace['legendgroup'] != 'marked_neighboring']
+
+        # new trace
+        new_fig = go.Figure(
+            go.Scatter(
+                x=[x],
+                y=[y],
+                mode='markers',
+                marker=dict(
+                    size=25,
+                    color='#009E73',
+                    symbol='circle',
+                    line=dict(width=0)
+                ),
+                showlegend=False,
+                legendgroup='marked_neighboring'
+            )
+        )
+
+        # add a marked trace
+        fig = go.Figure(data=new_fig['data'] + fig['data'],
+                        layout=fig['layout'])
+
+        data['fig'] = fig
+
+        # maybe update more like the margins and the ticks, and the theme
+        return fig
+
+    # table of discriminated tuples
+    @dash_app.callback(
+        Output('graph', 'figure', allow_duplicate=True),
+        Input('tbl', 'active_cell'),
+        prevent_initial_call=True
+    )
+    def click_discriminated_table(active_cell):
+        global data
+
+        row = active_cell['row']
+        # convert the row to a row index in the data pts to find the location
+        # x, y coordinate
+        data_pts_row = data['valid_tuples'][row][0]
+        # get the x, y coordinates
+        x = data['data_pts']['x'][data_pts_row]
+        y = data['data_pts']['y'][data_pts_row]
+
+        # update the figure with an added marker at the selected point
+        fig = data['fig']
+
+        # remove all the traces that contain marked as legend group
+        fig['data'] = [trace for trace in fig['data']
+                       if trace['legendgroup'] != 'marked']
+
+        # new trace
+        new_fig = go.Figure(
+            go.Scatter(
+                x=[x],
+                y=[y],
+                mode='markers',
+                marker=dict(
+                    size=25,
+                    color='#D55E00',
+                    symbol='circle',
+                    line=dict(width=0)
+                ),
+                showlegend=False,
+                legendgroup='marked'
+            )
+        )
+
+        # add a marked trace
+        fig = go.Figure(data=new_fig['data'] + fig['data'],
+                        layout=fig['layout'])
+
+        data['fig'] = fig
+
+        # maybe update more like the margins and the ticks, and the theme
+        return fig
 
     # MODAL
     @dash_app.callback(
@@ -245,7 +400,10 @@ def init_callbacks(dash_app):
     # CLICK ACTION
     @dash_app.callback(
         [Output("graph", "figure", allow_duplicate=True),
-         Output("neighbor_div", "children"), ],
+         Output("neighbor_div", "children"),
+         Output("neighbor_div", "className"),
+         Output("neighbor_txt", "style"),
+         ],
         [Input("graph", "clickData")],
         prevent_initial_call=True,
     )
@@ -253,11 +411,11 @@ def init_callbacks(dash_app):
         global data
 
         if clickData is None:
-            return no_update, no_update
+            return no_update, no_update, no_update, no_update
 
         pt = clickData["points"][0]
         if 'hovertext' not in pt.keys():
-            return no_update, no_update
+            return no_update, no_update, no_update, no_update
 
         pt_coords = pt['x'], pt['y']
         pt_idx = data['data_pts'][(data['data_pts']['x'] == pt_coords[0]) & (
@@ -316,7 +474,9 @@ def init_callbacks(dash_app):
 
         # if the point isn't a sensitive tuple, return the figure
         if not len(prot_pts) and not len(unprot_pts):
-            return no_update, no_update
+            return no_update, no_update, no_update, no_update
+
+        data['click_pt_idx'] = pt_idx
 
         # clear all the line shapes
         data['fig']['layout']['shapes'] = list()
@@ -348,7 +508,7 @@ def init_callbacks(dash_app):
         # add the shapes to the click shapes
         data['click_shapes'] = temp_fig['layout']['shapes']
 
-        return data['fig'], neighbor_tbl
+        return data['fig'], neighbor_tbl, "mb-3", {'display': 'block'}
 
     # HOVER ACTION
     @dash_app.callback(

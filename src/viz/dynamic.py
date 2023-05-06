@@ -11,6 +11,8 @@ def scatter_plot(data, hover_data=None, text=None, size=None,
         for row in data.iterrows():
             new_text = ''
             for col in hover_data:
+                if col in ['x', 'y', 'type']:
+                    continue
                 new_text += f'{col}: {row[1][col]}<br>'
             hover_text.append(new_text)
         hover_data = hover_text
@@ -18,11 +20,11 @@ def scatter_plot(data, hover_data=None, text=None, size=None,
     if symbol is not None:
         symbol = [symbol_map[k] for k in symbol]
 
-    fig = go.FigureWidget()
+    fig = go.Figure()
     new_scatter = go.Scatter(x=data['x'], y=data['y'], mode='markers+text',
                              hoverinfo='text', hovertext=hover_data,
                              text=text, textposition=text_position,
-                             name=name, opacity=1,
+                             name=name, opacity=1, legendgroup=name,
                              marker=dict(color=color, symbol=symbol, size=size,
                                          line=dict(width=width, color=color)))
     # if the symbol doesn't have a fill then add a thicker background with
@@ -34,7 +36,7 @@ def scatter_plot(data, hover_data=None, text=None, size=None,
                                 name=name, opacity=1,
                                 marker=dict(symbol=symbol, size=size,
                                             line=dict(width=2 * width, color='white')),
-                                showlegend=False)
+                                showlegend=False, legendgroup=name)
         fig.add_trace(bg_scatter)
 
     fig.add_trace(new_scatter)
@@ -59,7 +61,7 @@ def kde_segment(data, segment_dict, color, segment_name, weights=None):
                          thresh=0.01, bw_method=0.1)
 
     # create the plotly figure
-    figure = go.FigureWidget()
+    figure = go.Figure()
     # go over all paths and combine them into on
     for i, path in enumerate(og_fig.collections[-2].get_paths()):
         vertices = path.vertices  # the vertices of the path
@@ -75,7 +77,7 @@ def kde_segment(data, segment_dict, color, segment_name, weights=None):
 
 def combine_plots(plot1, plot2):
     # combine two plots
-    combined = go.FigureWidget(data=plot1.data + plot2.data)
+    combined = go.Figure(data=plot1.data + plot2.data)
     return combined
 
 

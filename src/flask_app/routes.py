@@ -26,7 +26,12 @@ def download(filename):
 
 @app.route('/')
 def home():
-    return redirect('/upload')
+    return redirect('/about')
+
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 
 @app.route('/upload')
@@ -120,14 +125,7 @@ def add_contour():
         # create the contour in dict form
         contour = {feat_name: val}
 
-        # get the ordinal attribute dict
-        ordinal_attr_dict = data['ordinal_attr_dict']
-        # invert the dict
-        inverted_dict = {v: k for k, v in ordinal_attr_dict[feat_name].items()}
-
-        # get an inverted dict to convert the value to readable value
-        # get the name of the new contour
-        contour_name = create_segment_name({feat_name: inverted_dict[int(val)]})
+        contour_name = create_segment_name({feat_name: val})
         data['contour_names'].append(contour_name)
     elif data_type == 'interval':
         _range = list()
@@ -163,6 +161,11 @@ def add_contour():
     # prepend the contour to the figure
     new_fig = dynamic.combine_plots(kde_segment, data['fig'])
 
+    # set the margins of the plot
+    new_fig.update_layout(margin=dict(l=10, r=10, b=10, t=10))
+    new_fig.update_xaxes(showticklabels=False)
+    new_fig.update_yaxes(showticklabels=False)
+
     # set plotly white theme
     data['fig'] = dynamic.set_theme(new_fig, 'plotly_white')
 
@@ -182,8 +185,9 @@ def situation_testing_form_post():
     path = data['path']
     csv_fname = data['csv_fname']
     form = request.form
-    k, protected_attrs, decision_attr, attrs_to_ignore = handle_situation_testing_form(
-        form, r)
+    k, protected_attrs, decision_attr, attrs_to_ignore = \
+        handle_situation_testing_form(form, r)
+    print(attrs_to_ignore)
 
     # create new json file
     new_json_data = {"attribute_types":
@@ -204,12 +208,13 @@ def situation_testing_form_post():
 
     fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
         contour_form, contour_form_options, features, attr_types_dict, \
-        used_colors_idcs, ordinal_attr_dict, dist_mat = calc_fig(path,
-                                                                 json_fname,
-                                                                 csv_fname,
-                                                                 protected_attrs,
-                                                                 attrs_to_ignore,
-                                                                 k)
+        used_colors_idcs, ordinal_attr_dict, dist_mat, \
+        situation_testing_variables_html = calc_fig(path,
+                                                    json_fname,
+                                                    csv_fname,
+                                                    protected_attrs,
+                                                    attrs_to_ignore,
+                                                    k)
 
     data['table'] = table_ls
     data['fig'] = fig
@@ -226,6 +231,7 @@ def situation_testing_form_post():
     data['valid_tuples'] = valid_tuples
     data['click_shapes'] = list()
     data['dist_mat'] = dist_mat
+    data['situation_testing_variables_html'] = situation_testing_variables_html
     data['plot'] = True
 
     return redirect('/plot')
@@ -317,7 +323,8 @@ def handle_situation_testing_form(form, r):
             sensitive_attr_vals.append([sensitive_attr_val])
         # attributes to ignore
         elif key == 'ignoreAttr':
-            ignore_attrs = form[key]
+            print(form.getlist(key))
+            ignore_attrs = form.getlist(key)
 
     # set the remaining return values
     decision_attr = {decision_attr[0]: decision_attr[1]}

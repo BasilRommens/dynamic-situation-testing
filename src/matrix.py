@@ -13,8 +13,8 @@ eps = 1e-3
 
 class Matrix:
     def __init__(self, elements, heatmap_viz=False, DD=None, VV=None, VD=None,
-                 DV=None, feat_names=[], attr_types=dict()):
-        self.elements = elements
+                 DV=None, feat_names=[], attr_types=dict(), attr_corr=False):
+        self.elements = elements[feat_names]
         self.heatmap_viz = heatmap_viz
         self.DD = DD
         self.VV = VV
@@ -22,6 +22,7 @@ class Matrix:
         self.DV = DV
         self.feat_names = feat_names
         self.attr_types = attr_types
+        self.attr_corr = attr_corr
         self.matrix = self._construct_matrix(DD, VV, VD, DV)
 
     def _construct_matrix(self, DD, VV, VD, DV) -> np.ndarray:
@@ -139,9 +140,14 @@ class Matrix:
         feature_ls = np.nan_to_num(feature_ls, 0)
 
         # calculate the distances between the V vectors
-        distances = scs.distance.pdist(idx_ls, self._correlation,
+        # (correlation per attr type)
+        if self.attr_corr:
+            distances = scs.distance.pdist(idx_ls, self._correlation,
                                        all_vecs=feature_ls,
                                        attr_names=self.feat_names)
+        # calculate the distances between the V vectors (correlation)
+        else:
+            distances = scs.distance.pdist(feature_ls, 'correlation')
 
         # replace the missing distances with the largest distance
         distances = np.nan_to_num(distances, max(distances))
@@ -160,6 +166,7 @@ class Matrix:
         """
         # get all the instances in a vector list
         instances_ls = -self.elements.values
+
         # calculate the highest and lowest feature value for each feature
         max_instances = np.max(instances_ls, axis=0)
         min_instances = np.min(instances_ls, axis=0)

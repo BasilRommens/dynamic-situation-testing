@@ -206,9 +206,9 @@ if __name__ == '__main__':
 
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew',
-                  'neutral': 'circle',
                   'positive discrimination': 'cross-thin',
-                  'sensitive': 'circle'}
+                  'neutral': 'circle',
+                  'protected': 'circle'}
 
     # # auto mpg data set
     # ignore_cols = ['displacement']
@@ -232,9 +232,14 @@ if __name__ == '__main__':
     # df = pd.DataFrame(gaussian_sets)
     # results = [colors_string[dim] for dim in range(6) for _ in range(100)]
 
+    # take the features neither in the ignore list, the class column, nor the
+    # protected attributes
+    feat_names = [col for col in df.columns if col not in ignore_cols and
+                  col != decision_attribute and col not in protected_attributes.keys()]
+
     # construct a distance matrix
-    m = Matrix(df, heatmap_viz=False, feat_names=df.columns, DD=dist_mat,
-               attr_types=r.attribute_types)
+    m = Matrix(df, heatmap_viz=False, feat_names=feat_names, DD=dist_mat,
+               attr_types=r.attribute_types, attr_corr=False)
     dist_mat = m.merged_matrix()
 
     # show kde plot of flattened distance matrix
@@ -299,7 +304,7 @@ if __name__ == '__main__':
                                         size=[10] * n_d_pts, width=2,
                                         name='Tuples')
     # scatter plot of feature points
-    scatter_feature = dynamic.scatter_plot(feat_pts, text=list(df.columns),
+    scatter_feature = dynamic.scatter_plot(feat_pts, text=feat_names,
                                            size=[20] * n_feat,
                                            text_position='top center',
                                            color=['black'] * n_feat,
@@ -308,18 +313,18 @@ if __name__ == '__main__':
     # scatter plot of sensitive tuples
     scatter_sensitive = dynamic.scatter_plot(
         data_pts.iloc[sensitive_tuple_idxs],
-        symbol=['sensitive'] * len(sensitive_tuple_idxs),
-        symbol_map={'sensitive': 'circle'},
+        symbol=['protected'] * len(sensitive_tuple_idxs),
+        symbol_map={'protected': 'circle'},
         color=['grey'] * len(sensitive_tuple_idxs),
         size=[20] * len(sensitive_tuple_idxs),
-        name='Sensitive Tuples')
+        name='Protected Tuples')
 
     # combine the two scatter plots
     scatter_final = dynamic.combine_plots(scatter_data, scatter_feature)
     scatter_final = dynamic.combine_plots(scatter_sensitive, scatter_final)
 
     # create the segments using seaborn and translate to plotly
-    init_segment = go.FigureWidget()
+    init_segment = go.Figure()
     # bw_weigths = calc_bw_weights(data_pts.values, 1)
     for i, segment_dict in enumerate(segment_dict_ls):
         # create the name of the segment

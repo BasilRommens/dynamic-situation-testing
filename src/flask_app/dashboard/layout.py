@@ -36,6 +36,10 @@ html_layout = """
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link"
+                       href="/about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
                        href="/upload">Upload</a>
                 </li>
                 <li class="nav-item">

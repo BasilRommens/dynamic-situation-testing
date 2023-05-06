@@ -8,7 +8,7 @@ def get_tuple_discrimination_type(valid_tuples, tuples):
         if valid_tuple_idx < 0:
             tuple_markers.append('neutral')
         elif valid_tuples[valid_tuple_idx][1] == 0:
-            tuple_markers.append('sensitive')
+            tuple_markers.append('protected')
         elif valid_tuples[valid_tuple_idx][1] > 0:
             tuple_markers.append('negative discrimination')
         elif valid_tuples[valid_tuple_idx][1] < 0:

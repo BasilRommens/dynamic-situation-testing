@@ -16,10 +16,7 @@
     <link rel="stylesheet" type="text/css"
           href="{{ url_for('static', filename='style.css') }}">
 
-    <title>Home</title>
-    <style>
-
-    </style>
+    <title>Situation Testing Form</title>
 </head>
 
 <body>
@@ -66,7 +63,7 @@
                                 <i class="fas fa-question-circle"
                                    data-bs-toggle="tooltip"
                                    data-bs-placement="right"
-                                   title="Variable for which to make sensitive group"></i>
+                                   title="Variable for which to make protected group"></i>
                             </label>
                             <select name="sensitiveAttrVar" class="form-control"
                                     id="sensitiveAttrVar" required>
@@ -81,7 +78,7 @@
                                 <i class="fas fa-question-circle"
                                    data-bs-toggle="tooltip"
                                    data-bs-placement="right"
-                                   title="Value for previous variable to make sensitive group"></i>
+                                   title="Value for previous variable to make protected group"></i>
                             </label>
                             <input type="text" class="form-control"
                                    name="sensitiveAttrVal"
@@ -126,11 +123,11 @@
                     <!--ignore attribute-->
                     <div class="form-group mt-2">
                         <label for="ignoreAttr">
-                            Ignore Attributes (you can select multiple ctrl+click)
+                            Ignore Variables (you can select multiple ctrl+click)
                             <i class="fas fa-question-circle"
                                data-bs-toggle="tooltip"
                                data-bs-placement="right"
-                               title="Attributes that shouldn't count in determining if someone is discriminated"></i>
+                               title="Variables that shouldn't count in determining if someone is discriminated"></i>
                         </label>
                         <select name="ignoreAttr" class="form-control"
                                 id="ignoreAttr" multiple>

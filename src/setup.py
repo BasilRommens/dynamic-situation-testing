@@ -94,10 +94,15 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
     symbol_map = {'negative discrimination': 'line-ew',
                   'neutral': 'circle',
                   'positive discrimination': 'cross-thin',
-                  'sensitive': 'circle'}
+                  'protected': 'circle'}
+
+    # take the features neither in the ignore list, the class column, nor the
+    # protected attributes
+    feat_names = [col for col in df.columns if col not in ignore_cols and
+                  col != decision_attr and col not in protected_attributes.keys()]
 
     # construct a distance matrix
-    m = Matrix(df, heatmap_viz=False, feat_names=df.columns, DD=dist_mat,
+    m = Matrix(df, heatmap_viz=False, feat_names=feat_names, DD=dist_mat,
                attr_types=r.attribute_types)
     dist_mat = m.merged_matrix()
 
@@ -124,8 +129,9 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
     feat_pts = pd.DataFrame(dim_red_samples[n_d_pts:], columns=['x', 'y'])
     feat_pts['type'] = 2
 
-    return all_tuple_markers, df, og_df, sensitive_tuple_idxs, segment_dict_ls, \
-        symbol_map, n_d_pts, n_feat, data_pts, feat_pts, class_colors, class_color_names_dict
+    return all_tuple_markers, df, og_df, sensitive_tuple_idxs, \
+        segment_dict_ls, symbol_map, n_d_pts, n_feat, data_pts, feat_pts, \
+        class_colors, class_color_names_dict, feat_names
 
 
 def sort_color_marker_pair(pair):
@@ -134,7 +140,7 @@ def sort_color_marker_pair(pair):
             return 3
         case 'negative discrimination':
             return 2
-        case 'sensitive':
+        case 'protected':
             return 1
         case 'neutral':
             return 0
@@ -142,9 +148,9 @@ def sort_color_marker_pair(pair):
 
 def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
               segment_dict_ls, symbol_map, n_d_pts, n_feat, data_pts, feat_pts,
-              class_colors, class_colors_name_dict):
+              class_colors, class_colors_name_dict, feat_names):
     # figure to which to add all the scatter plot data
-    scatter_data = go.FigureWidget()
+    scatter_data = go.Figure()
 
     # split the data points according to a pair of class colors and symbols
     colors_decision = list(
@@ -190,16 +196,8 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
         # add this to the scatter data figure
         scatter_data = dynamic.combine_plots(scatter_data, _scatter_data)
 
-    # # create a basic scatter plot of data points
-    # scatter_data = dynamic.scatter_plot(data_pts,
-    #                                     hover_data=list(og_df.columns),
-    #                                     symbol=all_tuple_markers,
-    #                                     symbol_map=symbol_map,
-    #                                     color=np.array(class_colors),
-    #                                     size=[10] * n_d_pts, width=2,
-    #                                     name='Tuples')
     # scatter plot of feature points
-    scatter_feature = dynamic.scatter_plot(feat_pts, text=list(df.columns),
+    scatter_feature = dynamic.scatter_plot(feat_pts, text=feat_names,
                                            size=[20] * n_feat,
                                            text_position='top center',
                                            color=['black'] * n_feat,
@@ -207,18 +205,18 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
     # scatter plot of sensitive tuples
     scatter_sensitive = dynamic.scatter_plot(
         data_pts.iloc[sensitive_tuple_idxs],
-        symbol=['sensitive'] * len(sensitive_tuple_idxs),
-        symbol_map={'sensitive': 'circle'},
+        symbol=['protected'] * len(sensitive_tuple_idxs),
+        symbol_map={'protected': 'circle'},
         color=['#aaaaaa'] * len(sensitive_tuple_idxs),
         size=[20] * len(sensitive_tuple_idxs),
-        name='Sensitive Tuples')
+        name='Protected Tuples')
 
     # combine the two scatter plots
     scatter_final = dynamic.combine_plots(scatter_data, scatter_feature)
     scatter_final = dynamic.combine_plots(scatter_sensitive, scatter_final)
 
     # create the segments using seaborn and translate to plotly
-    init_segment = go.FigureWidget()
+    init_segment = go.Figure()
     # bw_weigths = calc_bw_weights(data_pts.values, 1)
     contour_names = list()
     used_colors_idcs = list()
@@ -244,6 +242,10 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
 
     # set the margins of the plot to 10
     scatter_final.update_layout(margin=dict(l=10, r=10, b=10, t=10))
+
+    # remove the ticks from the plot
+    scatter_final.update_xaxes(showticklabels=False)
+    scatter_final.update_yaxes(showticklabels=False)
 
     return scatter_final, contour_names, segment_dict_ls, used_colors_idcs
 
@@ -355,7 +357,8 @@ def get_feature_form(feature, feature_value, feature_type, ordinal_attr_dict):
         for option in feature_value:
             if option not in inverted_dict:
                 continue
-            new_option = {'label': inverted_dict[option], 'value': option}
+            new_option = {'label': inverted_dict[option],
+                          'value': inverted_dict[option]}
             new_options.append(new_option)
         return dbc.Select(id=input_id, options=new_options,
                           value=feature_value[0], name=feature)
@@ -384,6 +387,38 @@ def construct_contour_form(features, feature_values, feature_types,
                     className='btn btn-success mt-2')], option_forms
 
 
+def get_situation_testing_html(k, decision_attributes, protected_attributes,
+                               ignore_cols):
+    # k neighbors
+    k_html = dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+        f'<b>Number of Neighbors</b>: k = {k}')
+
+    # decision attribute and its value
+    decision_html = dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+        f'<b>Decision Attribute</b>: {list(decision_attributes.keys())[0]} = {list(decision_attributes.values())[0]}')
+
+    # protected attributes and their values
+    protected_html_list = html.Ul([html.Li(f'{key} = {val}') for key, val in
+                                   protected_attributes.items()])
+    protected_html = html.Div([
+        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+            '<b>Protected Attributes</b>:'),
+        protected_html_list
+    ])
+
+    # ignore attributes
+    # add sensitive attributes to the ignored attributes
+    _ignore_cols = ignore_cols + list(protected_attributes.keys())
+    ignore_html_list = html.Ul([html.Li(f'{col}') for col in _ignore_cols])
+    ignore_html = html.Div([
+        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+            '<b>Ignored Columns</b>:'),
+        ignore_html_list
+    ])
+
+    return html.Div([k_html, decision_html, protected_html, ignore_html])
+
+
 def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
     # process the data for the figure
     fig_data = process_fig_data(path, json_fname, csv_fname,
@@ -410,7 +445,7 @@ def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
     df.drop(fig_data[2].keys(), axis=1, inplace=True)
 
     ordinal_attr_dict = fig_data[4].ordinal_attribute_values
-    features = df.columns
+    features = preplotting_data[12]
     feature_values = [df[c].unique() for c in features]
     attr_types_dict = fig_data[4].attribute_types
     feature_types = [attr_types_dict[feature] for feature in features]
@@ -423,17 +458,23 @@ def calc_fig(path, json_fname, csv_fname, protected_attributes, ignore_cols, k):
     table_ls = calc_table(preplotting_data[8], fig_data[0])
     print('calculated table')
 
+    # determine the situation testing variables html
+    situation_testing_html = get_situation_testing_html(k, fig_data[6],
+                                                        protected_attributes,
+                                                        ignore_cols)
+
     return scatter_final, preplotting_data[8], fig_data[
         0], table_ls, contour_names, contours, contour_html, contour_form, \
         contour_form_options, list(
         features), attr_types_dict, used_colors_idcs, ordinal_attr_dict, \
-        fig_data[5]
+        fig_data[5], situation_testing_html
 
 
 # calculate the figure to be used
 fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
     contour_form, contour_form_options, features, attr_types_dict, \
-    used_colors_idcs, ordinal_attr_dict, dist_mat = calc_german_credit_fig()
+    used_colors_idcs, ordinal_attr_dict, dist_mat, \
+    situation_testing_html = calc_german_credit_fig()
 
 data['table'] = table_ls
 data['fig'] = fig
@@ -449,6 +490,7 @@ data['feature_types_dict'] = attr_types_dict
 data['ordinal_attr_dict'] = ordinal_attr_dict
 data['valid_tuples'] = valid_tuples
 data['click_shapes'] = list()
-data['csv_fname'] = None
+data['csv_fname'] = 'german_credit_data_class.csv'
 data['plot_name'] = 'German Credit Dataset'
 data['dist_mat'] = dist_mat
+data['situation_testing_html'] = situation_testing_html

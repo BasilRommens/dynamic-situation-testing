@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+          crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/c42acb1891.js"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css"
+          href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>About</title>
+</head>
+<body>
+
+{% include 'navbar.html' %}
+
+{% block body %}
+    <div class="container">
+        <div class="row mt-3 justify-content-center">
+            <div class="col-6 align-self-center">
+                <h3>About the Discrimination Tool</h3>
+                <h4>The Situation Testing Algorithm</h4>
+                <h5>A Short Story</h5>
+                <p>
+                    <b>The premise:</b> Suppose that you work for a bank and
+                    need to determine if a new client is eligible for a loan for
+                    a house. You have a dataset of previous clients and their
+                    characteristics, like age, saving account, credit amount,
+                    etc.. This new client has the same set of characteristics.
+                    You have a system in place that determines if a
+                    client is eligible for a loan based on those
+                    characteristics. You want to know if this system is
+                    discriminating against certain groups of people, like people
+                    of color. This tool can determine if there is discrimination
+                    at play.
+                </p>
+                <p>
+                    <b>Discrimination detection:</b> The way you achieve this is
+                    by dividing people into two groups. One group is a protected
+                    group meaning that their characteristics can be female. The
+                    other group is the unprotected group and are the people that
+                    aren't female. We now determine for a decision like
+                    'accepted' or 'rejected' if people in the protected group
+                    are discriminated against. We only do this for those who are
+                    female and received a negative decision ('rejected'). We now
+                    find for each person in that group the most similar people
+                    in both the protected and unprotected group, both groups
+                    have the same size, for this example 2. Let's say that we've
+                    found 0 'rejected' in the unprotected group and 1 negative
+                    decision in the protected group. This means that the person
+                    that is currently checked possibly is discriminated as we
+                    have less negative decisions in the small unprotected group.
+                </p>
+                <h5>More Technical</h5>
+                <p>
+                    This tool detects discriminated tuples, the
+                    tuple is a structure that contains multiple elements like
+                    attributes of people, e.g. (age=31, job=CEO, ...,
+                    sex=female). We say we have <i
+                        class="fas fa-user-shield"></i> protected tuples when
+                    they adhere to the following condition:
+                </p>
+                <ul>
+                    <li>
+                        We determine a set of <b>sensitive variables</b>, like
+                        sex, race, etcetera. Then we determine the values for
+                        which we want to know if that group is discriminated
+                        against, e.g. use sex=female to know if females are
+                        discriminated against. Therefore, a tuple is protected
+                        if they have all the <b>sensitive variable</b> values.
+                    </li>
+
+                </ul>
+                <p>
+                    We also need to determine on what basis we want to check
+                    if someone is discriminated against. This is done by
+                    defining the <b>decision variable</b> like the class. We
+                    also need to determine the <b>decision value</b> which
+                    can be a value like 'accepted' or 'rejected'.
+                </p>
+                <p>
+                    Once we have defined the values of these variables, we
+                    divide them into two groups, the <i
+                        class="fas fa-user-shield"></i> protected and <i
+                        class="fas fa-user"></i> unprotected tuples. We will go
+                    over every <i class="fas fa-user-shield"></i> protected
+                    tuple with the decision value. Then, we determine its
+                    nearest neighbors or most similar tuples. We have <b>k</b>,
+                    a number (1, 2, 3, ...), neighbors for
+                    each the <i class="fas fa-user-shield"></i> protected and <i
+                        class="fas fa-user"></i> unprotected tuples. Once we
+                    determined these neighbors we will take the difference in
+                    the number of decision values of both groups divided by
+                    <b>k</b> ((# in prot group - # in unprot group) / k), e.g.
+                    if we have 1 <i class="fas fa-user-shield"></i> neighboring
+                    protected tuple with a decision value of 'rejected' and 0 <i
+                        class="fas fa-user"></i> unprotected tuples which are
+                    'rejected', then the difference is 1/2.
+                </p>
+                <p>
+                    A positive number for a negative decision value means that
+                    there may be discrimination, while for a positive decision
+                    value this must be a negative number.
+                </p>
+                <figure>
+                    <img src="{{ url_for('static', filename='situation-testing.png') }}"
+                         class="img-fluid">
+                    <figcaption>
+                        <b>Figure 1.</b> <i class="fas fa-square"
+                                            style="color: #009e73"></i> green
+                        have the 'accepted' class and <i class="fas fa-square"
+                                                         style="color: #d55e00"></i>
+                        red have the 'rejected' class. The <i
+                            class="fas fa-circle"
+                            style="color: #000000"></i>
+                        black circle represents the tuple we wish to search the
+                        neighbors for. The lines connect it to its nearest
+                        neighbors. The <i class="far fa-circle"
+                                          style="color: #000000"></i> black ring
+                        around some circles indicate that the tuple is part of
+                        the <i class="fas fa-user-shield"></i> protected class.
+                    </figcaption>
+                </figure>
+                <h4>The Default Dataset - German Credit Dataset</h4>
+                <p>
+                    The German credit dataset is a dataset that contains a lot
+                    of tuples. It is typically used to determine whether one
+                    receives a loan based on its tuple values. The variables
+                    are:
+                </p>
+                <ul>
+                    <li>Age (interval): The age of the person</li>
+                    <li>Sex (nominal): The sex of the person</li>
+                    <li>Job (ordinal): The type of job they have</li>
+                    <li>Housing (nominal): How they are housed, i.e. rent, own,
+                        ...
+                    </li>
+                    <li>Saving accounts (ordinal): What amount the person has on
+                        its saving accounts
+                    </li>
+                    <li>Checking account (ordinal): What amount the person has
+                        on its checking account
+                    </li>
+                    <li>Credit amount (interval): The persons credit score</li>
+                    <li>Duration (interval): The duration over which the person
+                        wants to return the loan
+                    </li>
+                    <li>Purpose (nominal): What the loan is for</li>
+                    <li>Class (interval): Whether the loan has been accepted or
+                        not
+                    </li>
+                </ul>
+                <p>
+                    The values between parentheses are the types of the values.
+                    The nominal values are categorical values, like baker,
+                    developer, consultant, ..., the ordinal values are
+                    categorical values that can be ordered, like good, better,
+                    best, and the interval values are numerical values, e.g.
+                    1, 5, 3, etc..
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+</body>
+</html>

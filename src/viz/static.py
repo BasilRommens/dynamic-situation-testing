@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # sns.scatterplot(x=dim_red_samples[:base, 0], y=dim_red_samples[:base, 1],
     #                 hue=class_col, style=all_tuple_markers, legend=False,
     #                 markers={'negative discrimination': '_', 'neutral': '4',
-    #                          'positive discrimination': '+', 'sensitive': '4'},
+    #                          'positive discrimination': '+', 'protected': '4'},
     #                 linewidth=1.5, zorder=1)
     # non_neutral_pts = dim_red_samples[sensitive_tuple_idxs]
     # non_neutral_tuple_markers = np.array(all_tuple_markers)[sensitive_tuple_idxs]
