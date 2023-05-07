@@ -175,7 +175,8 @@ def add_contour():
 @app.route('/situation-testing-form')
 def situation_testing_form():
     attrs = list(data['tuples'].columns)
-    return render_template('situation-testing-form.html', attrs=attrs)
+    return render_template('situation-testing-form.html', attrs=attrs,
+                           ignore_attrs=data['features'])
 
 
 @app.route('/situation-testing-form', methods=['POST'])
@@ -209,12 +210,12 @@ def situation_testing_form_post():
     fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
         contour_form, contour_form_options, features, attr_types_dict, \
         used_colors_idcs, ordinal_attr_dict, dist_mat, \
-        situation_testing_variables_html = calc_fig(path,
-                                                    json_fname,
-                                                    csv_fname,
-                                                    protected_attrs,
-                                                    attrs_to_ignore,
-                                                    k)
+        situation_testing_html = calc_fig(path,
+                                          json_fname,
+                                          csv_fname,
+                                          protected_attrs,
+                                          attrs_to_ignore,
+                                          k)
 
     data['table'] = table_ls
     data['fig'] = fig
@@ -231,7 +232,7 @@ def situation_testing_form_post():
     data['valid_tuples'] = valid_tuples
     data['click_shapes'] = list()
     data['dist_mat'] = dist_mat
-    data['situation_testing_variables_html'] = situation_testing_variables_html
+    data['situation_testing_html'] = situation_testing_html
     data['plot'] = True
 
     return redirect('/plot')

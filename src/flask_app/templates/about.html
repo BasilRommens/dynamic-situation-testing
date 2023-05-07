@@ -32,30 +32,32 @@
                     need to determine if a new client is eligible for a loan for
                     a house. You have a dataset of previous clients and their
                     characteristics, like age, saving account, credit amount,
-                    etc.. This new client has the same set of characteristics.
-                    You have a system in place that determines if a
-                    client is eligible for a loan based on those
-                    characteristics. You want to know if this system is
-                    discriminating against certain groups of people, like people
-                    of color. This tool can determine if there is discrimination
-                    at play.
+                    etc. They also have values like 29 for their age. This new
+                    client has the same set of characteristics. You have a
+                    system that determines if a client is eligible for a loan
+                    with certain characteristic values. You want to know if this
+                    system discriminates against certain groups of people, like
+                    people of color. This tool can determine if there is
+                    discrimination at play.
                 </p>
                 <p>
                     <b>Discrimination detection:</b> The way you achieve this is
                     by dividing people into two groups. One group is a protected
-                    group meaning that their characteristics can be female. The
-                    other group is the unprotected group and are the people that
-                    aren't female. We now determine for a decision like
-                    'accepted' or 'rejected' if people in the protected group
-                    are discriminated against. We only do this for those who are
-                    female and received a negative decision ('rejected'). We now
-                    find for each person in that group the most similar people
-                    in both the protected and unprotected group, both groups
-                    have the same size, for this example 2. Let's say that we've
-                    found 0 'rejected' in the unprotected group and 1 negative
-                    decision in the protected group. This means that the person
-                    that is currently checked possibly is discriminated as we
-                    have less negative decisions in the small unprotected group.
+                    group, meaning that their characteristic value can be
+                    female. The other group is the unprotected group which is
+                    the people that aren't female. We now determine a decision
+                    like 'accepted' or 'rejected' if people in the protected
+                    group are discriminated against. We only do this for those
+                    who are female and received a negative decision
+                    ('rejected'). We now find for each person in that group the
+                    most similar people in both the protected and unprotected
+                    group, both new groups have the same size, for this example
+                    2. Let's say that we found 0 'rejected' in the new
+                    unprotected group and 1 negative decision in the new
+                    protected group. This means that the person that is
+                    currently being checked possibly is discriminated against as
+                    we have fewer negative decisions in the new unprotected
+                    group.
                 </p>
                 <h5>More Technical</h5>
                 <p>
@@ -93,8 +95,9 @@
                     tuple with the decision value. Then, we determine its
                     nearest neighbors or most similar tuples. We have <b>k</b>,
                     a number (1, 2, 3, ...), neighbors for
-                    each the <i class="fas fa-user-shield"></i> protected and <i
-                        class="fas fa-user"></i> unprotected tuples. Once we
+                    each of the <i class="fas fa-user-shield"></i> protected and
+                    <i
+                            class="fas fa-user"></i> unprotected tuples. Once we
                     determined these neighbors we will take the difference in
                     the number of decision values of both groups divided by
                     <b>k</b> ((# in prot group - # in unprot group) / k), e.g.
@@ -104,7 +107,7 @@
                     'rejected', then the difference is 1/2.
                 </p>
                 <p>
-                    A positive number for a negative decision value means that
+                    A positive number for a negative decision value, means that
                     there may be discrimination, while for a positive decision
                     value this must be a negative number.
                 </p>
@@ -161,8 +164,8 @@
                     The nominal values are categorical values, like baker,
                     developer, consultant, ..., the ordinal values are
                     categorical values that can be ordered, like good, better,
-                    best, and the interval values are numerical values, e.g.
-                    1, 5, 3, etc..
+                    and best, and the interval values are numerical values, e.g.
+                    1, 5, 3, etc.
                 </p>
             </div>
         </div>

@@ -63,7 +63,7 @@
                                 <i class="fas fa-question-circle"
                                    data-bs-toggle="tooltip"
                                    data-bs-placement="right"
-                                   title="Variable for which to make protected group"></i>
+                                   title="Variable for which to make a protected group"></i>
                             </label>
                             <select name="sensitiveAttrVar" class="form-control"
                                     id="sensitiveAttrVar" required>
@@ -78,7 +78,7 @@
                                 <i class="fas fa-question-circle"
                                    data-bs-toggle="tooltip"
                                    data-bs-placement="right"
-                                   title="Value for previous variable to make protected group"></i>
+                                   title="Value for sensitive variable to make a protected group"></i>
                             </label>
                             <input type="text" class="form-control"
                                    name="sensitiveAttrVal"
@@ -113,7 +113,7 @@
                             <i class="fas fa-question-circle"
                                data-bs-toggle="tooltip"
                                data-bs-placement="right"
-                               title="Value of the decision variable"></i>
+                               title="Value to determine dscrimination on"></i>
                         </label>
                         <input name="decisionAttrVal" type="text"
                                class="form-control" id="decisionAttrVal"
@@ -123,7 +123,7 @@
                     <!--ignore attribute-->
                     <div class="form-group mt-2">
                         <label for="ignoreAttr">
-                            Ignore Variables (you can select multiple ctrl+click)
+                            Ignore Variables (you can select multiple using ctrl+click)
                             <i class="fas fa-question-circle"
                                data-bs-toggle="tooltip"
                                data-bs-placement="right"
@@ -131,7 +131,7 @@
                         </label>
                         <select name="ignoreAttr" class="form-control"
                                 id="ignoreAttr" multiple>
-                            {% for attr in attrs %}
+                            {% for attr in ignore_attrs %}
                                 <option>{{ attr }}</option>
                             {% endfor %}
                         </select>

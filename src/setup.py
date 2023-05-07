@@ -201,7 +201,7 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
                                            size=[20] * n_feat,
                                            text_position='top center',
                                            color=['black'] * n_feat,
-                                           name='Features')
+                                           name='Variables')
     # scatter plot of sensitive tuples
     scatter_sensitive = dynamic.scatter_plot(
         data_pts.iloc[sensitive_tuple_idxs],

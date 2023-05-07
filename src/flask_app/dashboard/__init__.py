@@ -59,8 +59,8 @@ def serve_layout():
                         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
                             f'<b>Click</b> on a point ({html_points}) to lock the {red_square} <b>red</b> and {green_square} <b>green</b> links to the neighbors'),
                         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
-                            f'{minus} Negative discrimination means that you have a positive score for a negative class value.'
-                            f' {plus} Positive discrimination means that your neighborhood of protected samples were mostly positevily evaluated.'
+                            f'{minus} Negative discrimination means that your protected neighborhood is more in the decision class.'
+                            f' {plus} Positive discrimination means that your protected neighborhood are mostly put in the other class than the decision class.<br>'
                             f' If your a sample is close to a <i class="fas fa-circle"></i> variable point then it probably has a high value for that variable.'
                         )
                     ]
@@ -151,7 +151,7 @@ def serve_layout():
         neighbor_table.append(
             html.Div(
                 dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
-                    f"When clicking on a value in a row, the corresponding tuple will be highlighted in the plot with a {green_circle} green circle.",
+                    f"These are all the neighboring tuples of the currently selected tuple. When clicking on a value in a row, the corresponding tuple will be highlighted in the plot with a {green_circle} green circle.",
                 ),
                 id='neighbor_txt',
                 className='mb-2',
@@ -243,32 +243,71 @@ def init_callbacks(dash_app):
     # table of neigboring tuples
     @dash_app.callback(
         Output('graph', 'figure', allow_duplicate=True),
-        Input('neighbor_tbl', 'active_cell'),
+        [Input('neighbor_tbl', 'active_cell'),
+         State("graph_store_layout", "data"),
+         State("graph_store_style", "data")],
         prevent_initial_call=True
     )
-    def click_neighbor_table(active_cell):
+    def click_neighbor_table(active_cell, graph_store_layout,
+                             graph_store_style):
         global data
 
         if active_cell is None:
-            return no_update
+            return no_update, no_update, no_update
 
         # get the clicked point in the graph
-        valid_tuple_click_pt = [(prot_tuples, unprot_tuples) for pt_idx, _, prot_tuples, unprot_tuples in data['valid_tuples'] if pt_idx == data['click_pt_idx']][0]
+        valid_tuple_click_pt = \
+            [(prot_tuples, unprot_tuples) for
+             pt_idx, _, prot_tuples, unprot_tuples
+             in data['valid_tuples'] if pt_idx == data['click_pt_idx']][0]
 
         # get k to determine if the tuple is protected or unprotected
         protected_len = len(valid_tuple_click_pt[0])
 
         # remove 1 from the row as the first row is the clicked point
-        row = active_cell['row']
+        row = active_cell['row'] - 1
+
+        # if the active cell is the clicked point, then do nothing
+        if row < 0:
+            return no_update, no_update, no_update
+
+        # keep the zoom level and everything when hovering using graph_store
+        if graph_store_layout:
+            if 'xaxis.autorange' in graph_store_layout or 'autosize' in graph_store_layout:
+                data['fig']['layout']['xaxis']['autorange'] = True
+            else:
+                data['fig']['layout']['xaxis']['autorange'] = False
+            if 'yaxis.autorange' in graph_store_layout or 'autosize' in graph_store_layout:
+                data['fig']['layout']['yaxis']['autorange'] = True
+            else:
+                data['fig']['layout']['yaxis']['autorange'] = False
+
+            for axis_type in ['x', 'y']:
+                for axis_name in ['axis', 'axis2']:
+                    if f'{axis_type}{axis_name}.range[0]' not in graph_store_layout:
+                        continue
+                    data['fig']['layout'][f'{axis_type}{axis_name}'][
+                        'range'] = [
+                        graph_store_layout[f'{axis_type}{axis_name}.range[0]'],
+                        graph_store_layout[f'{axis_type}{axis_name}.range[1]']
+                    ]
+
+        # keep hidden traces hidden and show traces that weren't hidden
+        if graph_store_style:
+            for idx, trace_idx in enumerate(graph_store_style[1]):
+                data['fig'].data[trace_idx].update(
+                    visible=graph_store_style[0]['visible'][idx])
 
         # if the row is greater than the protected length, then it is an
         # unprotected tuple.
         if row >= protected_len:
             # Subtract the protected length to get the unprotected point
             row -= protected_len
-            data_pts_row = valid_tuple_click_pt[1][row][0]  # unprotected point index
+            data_pts_row = valid_tuple_click_pt[1][row][
+                0]  # unprotected point index
         else:
-            data_pts_row = valid_tuple_click_pt[0][row][0]  # protected point index
+            data_pts_row = valid_tuple_click_pt[0][row][
+                0]  # protected point index
 
         # get the x, y coordinates
         x = data['data_pts']['x'][data_pts_row]
@@ -310,10 +349,12 @@ def init_callbacks(dash_app):
     # table of discriminated tuples
     @dash_app.callback(
         Output('graph', 'figure', allow_duplicate=True),
-        Input('tbl', 'active_cell'),
+        [Input('tbl', 'active_cell'),
+         State("graph_store_layout", "data"),
+         State("graph_store_style", "data")],
         prevent_initial_call=True
     )
-    def click_discriminated_table(active_cell):
+    def click_discriminated_table(active_cell, graph_store_layout, graph_store_style):
         global data
 
         row = active_cell['row']
@@ -324,6 +365,32 @@ def init_callbacks(dash_app):
         x = data['data_pts']['x'][data_pts_row]
         y = data['data_pts']['y'][data_pts_row]
 
+        # keep the zoom level and everything when hovering using graph_store
+        if graph_store_layout:
+            if 'xaxis.autorange' in graph_store_layout or 'autosize' in graph_store_layout:
+                data['fig']['layout']['xaxis']['autorange'] = True
+            else:
+                data['fig']['layout']['xaxis']['autorange'] = False
+            if 'yaxis.autorange' in graph_store_layout or 'autosize' in graph_store_layout:
+                data['fig']['layout']['yaxis']['autorange'] = True
+            else:
+                data['fig']['layout']['yaxis']['autorange'] = False
+
+            for axis_type in ['x', 'y']:
+                for axis_name in ['axis', 'axis2']:
+                    if f'{axis_type}{axis_name}.range[0]' not in graph_store_layout:
+                        continue
+                    data['fig']['layout'][f'{axis_type}{axis_name}'][
+                        'range'] = [
+                        graph_store_layout[f'{axis_type}{axis_name}.range[0]'],
+                        graph_store_layout[f'{axis_type}{axis_name}.range[1]']
+                    ]
+
+        # keep hidden traces hidden and show traces that weren't hidden
+        if graph_store_style:
+            for idx, trace_idx in enumerate(graph_store_style[1]):
+                data['fig'].data[trace_idx].update(
+                    visible=graph_store_style[0]['visible'][idx])
         # update the figure with an added marker at the selected point
         fig = data['fig']
 
