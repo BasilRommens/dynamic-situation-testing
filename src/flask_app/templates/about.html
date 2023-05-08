@@ -30,34 +30,43 @@
                 <p>
                     <b>The premise:</b> Suppose that you work for a bank and
                     need to determine if a new client is eligible for a loan for
-                    a house. You have a dataset of previous clients and their
-                    characteristics, like age, saving account, credit amount,
-                    etc. They also have values like 29 for their age. This new
-                    client has the same set of characteristics. You have a
-                    system that determines if a client is eligible for a loan
-                    with certain characteristic values. You want to know if this
-                    system discriminates against certain groups of people, like
-                    people of color. This tool can determine if there is
-                    discrimination at play.
+                    a house. This new client has a set of different
+                    characteristics, like age, saving account, employment
+                    status, and so on. These characteristics can take values
+                    like 29, 31 or 51 for their age. You also have a dataset
+                    that contains the same set of characteristics for people
+                    that have already applied for a loan for a house. Because
+                    this job is very repetitive you have a system that
+                    determines if a client is eligible for a loan given their
+                    characteristics. But sometimes this system gives weird
+                    results, like a female person that has a lot of money on
+                    their saving account and a good job, but still gets
+                    rejected. It does this for a lot of women. Now you want to
+                    know if this system is truly discriminating against people.
+                    This is where this tool comes into play.
                 </p>
                 <p>
-                    <b>Discrimination detection:</b> The way you achieve this is
-                    by dividing people into two groups. One group is a protected
-                    group, meaning that their characteristic value can be
-                    female. The other group is the unprotected group which is
-                    the people that aren't female. We now determine a decision
-                    like 'accepted' or 'rejected' if people in the protected
-                    group are discriminated against. We only do this for those
-                    who are female and received a negative decision
-                    ('rejected'). We now find for each person in that group the
-                    most similar people in both the protected and unprotected
-                    group, both new groups have the same size, for this example
-                    2. Let's say that we found 0 'rejected' in the new
-                    unprotected group and 1 negative decision in the new
-                    protected group. This means that the person that is
-                    currently being checked possibly is discriminated against as
-                    we have fewer negative decisions in the new unprotected
-                    group.
+                    <b>Discrimination detection with this tool:</b> The way this
+                    tool detects discrimination is by comparing two groups of
+                    people. One group is a protected group, meaning that their
+                    sex is like in our example female. The other group is the
+                    unprotected group and consists of people that aren't female.
+                    We now determine a decision of the acceptance of a loan like
+                    'accepted' or 'rejected' if people in the protected group
+                    are discriminated against. We will only do this for those
+                    who are female and received a negative decision, in other
+                    words, the ones who were rejected. Let's say that we try to
+                    determine if a woman named Carla is discriminated against
+                    because her request for a loan didn't get accepted. We will
+                    search 3 of the most similar people in the protected group,
+                    and we will name them Carla's protected neighbors, and 3 in
+                    the unprotected group, are called Carla's unprotected
+                    neighbors. Let's say that we found 1 'rejected' among
+                    Carla's unprotected neighbors and 2 negative decisions in
+                    the new protected neighbors. This means that Carla has more
+                    neighbors in her protected neighborhood than in her
+                    unprotected neighborhood. This means that she has a higher
+                    chance of being discriminated against because she is female.
                 </p>
                 <h5>More Technical</h5>
                 <p>
