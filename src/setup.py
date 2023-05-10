@@ -395,14 +395,14 @@ def get_situation_testing_html(k, decision_attributes, protected_attributes,
 
     # decision attribute and its value
     decision_html = dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
-        f'<b>Decision Attribute</b>: {list(decision_attributes.keys())[0]} = {list(decision_attributes.values())[0]}')
+        f'<b>Decision Variable</b>: {list(decision_attributes.keys())[0]} = {list(decision_attributes.values())[0]}')
 
     # protected attributes and their values
     protected_html_list = html.Ul([html.Li(f'{key} = {val}') for key, val in
                                    protected_attributes.items()])
     protected_html = html.Div([
         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
-            '<b>Protected Attributes</b>:'),
+            '<b>Protected Variables</b>:'),
         protected_html_list
     ])
 
@@ -412,7 +412,7 @@ def get_situation_testing_html(k, decision_attributes, protected_attributes,
     ignore_html_list = html.Ul([html.Li(f'{col}') for col in _ignore_cols])
     ignore_html = html.Div([
         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
-            '<b>Ignored Columns</b>:'),
+            '<b>Ignored Variables</b>:'),
         ignore_html_list
     ])
 

@@ -44,6 +44,7 @@ def serve_layout():
     minus = '<i class="fas fa-minus" style="color: #56b4e9;"></i>'
     red_square = '<i class="fas fa-square" style="color: #d55e00;"></i>'
     green_square = '<i class="fas fa-square" style="color: #009e73;"></i>'
+    blue_circle = '<i class="fas fa-circle" style="color: #56b4e9;"></i>'
     graph = [
         dbc.Modal(
             [
@@ -54,14 +55,16 @@ def serve_layout():
                 ),
                 dbc.ModalBody(
                     [
+                        html.P(
+                            'This plot is a 2D representation of all the different people in the dataset. The visualization tries to put people that are similar close together.'),
                         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
                             f'<b>Hover</b> over a point ({html_points}) to see its details and its linked neighbors'),
                         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
                             f'<b>Click</b> on a point ({html_points}) to lock the {red_square} <b>red</b> and {green_square} <b>green</b> links to the neighbors'),
                         dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
-                            f'{minus} Negative discrimination means that your protected neighborhood is more in the decision class.'
-                            f' {plus} Positive discrimination means that your protected neighborhood are mostly put in the other class than the decision class.<br>'
-                            f' If your a sample is close to a <i class="fas fa-circle"></i> variable point then it probably has a high value for that variable.'
+                            f'If a female instance is marked as {minus} negatively discriminated it means that her most similar female instances like her were mostly rejected for a loan; while her most similar male instances were accepted for one.'
+                            f" If a female instance is marked as {plus} positively discriminated it means that her most similar female instances like her were mostly accepted for a loan; while her most similar male instances weren't accepted for one."
+                            f' If a person is close to a <i class="fas fa-circle"></i> variable point then it probably has a high value for that variable. It could have a high value for age, like 68, and thus it will be close to the age variable point.'
                         )
                     ]
                 ),
@@ -74,25 +77,173 @@ def serve_layout():
             id="modal",
             is_open=False,
         ),
-        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
-            '<h4>Discrimination Plot'
+        dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle(
+                    dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                        '<i class="fas fa-info-circle"></i> Info About Discriminated Points'
+                    ))
+                ),
+                dbc.ModalBody(
+                    [
+                        html.P(
+                            'You can determine if someone is truly discriminated if the score difference between the two groups (protected (e.g. female) and unprotected (e.g. male)) is large enough and positive for a negative decision and all the neighboring samples have a relatively low distance.'),
+                        html.P(
+                            "We work out an example for Emma who's loan didn't get accepted and is discriminated."),
+                        html.Ul([
+                            html.Li([
+                                html.P('Similar Female People (protected):'),
+                                html.Ul([
+                                    html.Li(
+                                        'Carla (distance: 2.2, decision: not accepted)'),
+                                    html.Li(
+                                        'Erin (distance: 1.5, decision: not accepted)'),
+                                ]),
+                            ]),
+                            html.Li([
+                                html.P('Similar Male People (unprotected):'),
+                                html.Ul([
+                                    html.Li(
+                                        'Samuel (distance: 2.4, decision: accepted)'),
+                                    html.Li(
+                                        'Andrew (distance: 1.3, decision: accepted)'),
+                                ]),
+                            ])
+                        ]),
+                        html.P(
+                            "We can see that all distance are low and thus close to Emma. In addition to that there is a significant score: 1."),
+                        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                            "<b>Recall:</b> We take the number of rejected people from the unprotected group and subtract them from the number of people that got rejected in the protected group. E.g. 2 rejected people in the unprotected group and 0 rejected people in the protected group equals 2. We then divide this by the number of people in the unprotected group. There are 2 people in the unprotected group. 2 / 2 = 1. This is the score."),
+                    ]
+                ),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Close", id="discriminated-close", className="ms-auto",
+                        n_clicks=0
+                    )
+                ),
+            ],
+            id="discriminated-modal",
+            is_open=False,
         ),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle(
+                    dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                        '<i class="fas fa-info-circle"></i> Info About Non-Discriminated Points'
+                    ))
+                ),
+                dbc.ModalBody(
+                    [
+                        html.P(
+                            "You can determine if someone isn't discriminated if the score difference between the two groups is either positive or has a negative value and all the neighboring samples have a relatively low distance"),
+                        html.P(
+                            "We work out an example for Olivia who's loan didn't get accepted."),
+                        html.Ul([
+                            html.Li([
+                                html.P('Similar Female People (protected):'),
+                                html.Ul([
+                                    html.Li(
+                                        'Eve (distance: 3, decision: not accepted)'),
+                                    html.Li(
+                                        'Lauren (distance: 1.6, decision: accepted)'),
+                                ]),
+                            ]),
+                            html.Li([
+                                html.P('Similar Male People (unprotected):'),
+                                html.Ul([
+                                    html.Li(
+                                        'Samuel (distance: 2, decision: not accepted)'),
+                                    html.Li(
+                                        'Andrew (distance: 1.2, decision: not accepted)'),
+                                ]),
+                            ])
+                        ]),
+                        html.P(
+                            "We can see that all distance are low, while the difference is negative: -1/2. "),
+                        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                            "<b>Recall:</b> We take the number of rejected people from the unprotected group and subtract them from the number of people that got rejected in the protected group. E.g. 2 rejected people in the unprotected group and 0 rejected people in the protected group equals 2. We then divide this by the number of people in the unprotected group. There are 2 people in the unprotected group. 2 / 2 = 1. This is the score."),
+                    ]
+                ),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Close", id="not-discriminated-close",
+                        className="ms-auto",
+                        n_clicks=0
+                    )
+                ),
+            ],
+            id="not-discriminated-modal",
+            is_open=False,
+        ),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle(
+                    dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                        '<i class="fas fa-info-circle"></i> Info About Maybe Discriminated Points'
+                    ))
+                ),
+                dbc.ModalBody(
+                    [
+                        html.P(""),
+                        html.P(
+                            "We work out an example for Dana who's application for a loan didn't get accepted."),
+                        html.Ul([
+                            html.Li([
+                                html.P('Similar Female People (protected):'),
+                                html.Ul([
+                                    html.Li(
+                                        'Mia (distance: 9.9, decision: not accepted)'),
+                                    html.Li(
+                                        'Lauren (distance: 6.1, decision: not accepted)'),
+                                ]),
+                            ]),
+                            html.Li([
+                                html.P('Similar Male People (unprotected):'),
+                                html.Ul([
+                                    html.Li(
+                                        'Samuel (distance: 7.4, decision: not accepted)'),
+                                    html.Li(
+                                        'Andrew (distance: 6.5, decision: accepted)'),
+                                ]),
+                            ])
+                        ]),
+                        html.P(
+                            "We can see that all distance are high, while there is a positive difference: 1/2. But because of the large distance there is not enough similarity between Dana and her neighbors and thus we can't say anything conclusively."),
+                        dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                            "<b>Recall:</b> We take the number of rejected people from the unprotected group and subtract them from the number of people that got rejected in the protected group")
+                    ]
+                ),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Close", id="maybe-discriminated-close",
+                        className="ms-auto",
+                        n_clicks=0
+                    )
+                ),
+            ],
+            id="maybe-discriminated-modal",
+            is_open=False,
+        ),
+        html.H4('Discrimination Plot'),
         dbc.Row([
             dbc.Col(
                 dbc.Button(
                     dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
                         '<i class="fas fa-info-circle"></i> More Info'
-                    ), id="open", color="dark", n_clicks=0),
+                    ), id="info", color="dark", n_clicks=0),
+                width=3
             ),
             dbc.Col(
                 dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
                     f'''
                             <p>
-                                {red_square} <b>Red</b> = Protected,
-                                {green_square} <b>Green</b> = Not Protected
+                                {red_square} <b>Red</b> = Protected (e.g. female)
+                                {green_square} <b>Green</b> = Not Protected (e.g. male)
                             </p>
                         '''
                 ), className="text-end align-middle",
+                width=9
             ),
         ]),
         dcc.Graph(
@@ -101,12 +252,32 @@ def serve_layout():
             clear_on_unhover=True,
             style={'display': 'block'}
         ),
+        dbc.Row([
+            dbc.Col(
+                dbc.Button(
+                    dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                        f'{minus} Discriminated?'
+                    ), id="discriminated", color="dark", n_clicks=0),
+            ),
+            dbc.Col(
+                dbc.Button(
+                    dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                        f'{blue_circle} Maybe Discriminated?'
+                    ), id="maybe-discriminated", color="dark", n_clicks=0),
+            ),
+            dbc.Col(
+                dbc.Button(
+                    dash_dangerously_set_inner_html.DangerouslySetInnerHTML(
+                        f'{plus} Not Discriminated?'
+                    ), id="not-discriminated", color="dark", n_clicks=0),
+            )
+        ])
     ]
 
     contour_form = [
         html.H4("Add Contours", className='mt-2'),
         html.P(
-            "Contours are used to group tuples with similar values for a variable.",
+            "Contours group people with similar characteristics. Like all the people that are between 30 and 45.",
             className='mb-2'),
         html.Form(
             data['contour_form'],
@@ -118,13 +289,9 @@ def serve_layout():
     ]
 
     contour_rm_btns = [
-        html.Div(data['contour_html'],
-                 id='contour_buttons'),
+        html.Div(data['contour_html'], id='contour_buttons'),
     ]
 
-    decision_attr_var = ''
-    decision_attr_val = ''
-    sensitive_attr_dict = dict()
     red_circle = '<i class="fas fa-circle" style="color: #d55e00;"></i>'
     green_circle = '<i class="fas fa-circle" style="color: #009e73;"></i>'
     table = [
@@ -354,7 +521,8 @@ def init_callbacks(dash_app):
          State("graph_store_style", "data")],
         prevent_initial_call=True
     )
-    def click_discriminated_table(active_cell, graph_store_layout, graph_store_style):
+    def click_discriminated_table(active_cell, graph_store_layout,
+                                  graph_store_style):
         global data
 
         row = active_cell['row']
@@ -427,10 +595,43 @@ def init_callbacks(dash_app):
     # MODAL
     @dash_app.callback(
         Output("modal", "is_open"),
-        [Input("open", "n_clicks"), Input("close", "n_clicks")],
+        [Input("info", "n_clicks"), Input("close", "n_clicks")],
         [State("modal", "is_open")],
     )
-    def toggle_modal(n1, n2, is_open):
+    def toggle_info_modal(n1, n2, is_open):
+        if n1 or n2:
+            return not is_open
+        return is_open
+
+    @dash_app.callback(
+        Output("discriminated-modal", "is_open"),
+        [Input("discriminated", "n_clicks"),
+         Input("discriminated-close", "n_clicks")],
+        [State("discriminated-modal", "is_open")],
+    )
+    def toggle_discriminated_modal(n1, n2, is_open):
+        if n1 or n2:
+            return not is_open
+        return is_open
+
+    @dash_app.callback(
+        Output("not-discriminated-modal", "is_open"),
+        [Input("not-discriminated", "n_clicks"),
+         Input("not-discriminated-close", "n_clicks")],
+        [State("not-discriminated-modal", "is_open")],
+    )
+    def toggle_not_discriminated_modal(n1, n2, is_open):
+        if n1 or n2:
+            return not is_open
+        return is_open
+
+    @dash_app.callback(
+        Output("maybe-discriminated-modal", "is_open"),
+        [Input("maybe-discriminated", "n_clicks"),
+         Input("maybe-discriminated-close", "n_clicks")],
+        [State("maybe-discriminated-modal", "is_open")],
+    )
+    def toggle_maybe_discriminated_modal(n1, n2, is_open):
         if n1 or n2:
             return not is_open
         return is_open

@@ -29,44 +29,50 @@
                 <h5>A Short Story</h5>
                 <p>
                     <b>The premise:</b> Suppose that you work for a bank and
-                    need to determine if a new client is eligible for a loan for
-                    a house. This new client has a set of different
-                    characteristics, like age, saving account, employment
-                    status, and so on. These characteristics can take values
-                    like 29, 31 or 51 for their age. You also have a dataset
-                    that contains the same set of characteristics for people
-                    that have already applied for a loan for a house. Because
-                    this job is very repetitive you have a system that
-                    determines if a client is eligible for a loan given their
-                    characteristics. But sometimes this system gives weird
-                    results, like a female person that has a lot of money on
-                    their saving account and a good job, but still gets
-                    rejected. It does this for a lot of women. Now you want to
-                    know if this system is truly discriminating against people.
-                    This is where this tool comes into play.
+                    need to determine if a new client is eligible for a loan,
+                    e.g. for a house. You have some information available for
+                    this new client, like their age, the amount of money in
+                    their savings account, and their employment status. For
+                    instance, one of the clients is 31 years old, has 10k in
+                    their savings account, and is employed at their current job
+                    for 5 years. You also have a dataset that contains the same
+                    set of characteristics for people that have already applied
+                    for a loan, along with the decision by a banker to grant
+                    each person a loan or not. Now, a system has been developed
+                    to automate the decision task for you. This system has
+                    learned patterns from past data, to decide for new clients
+                    whether they’re eligible for a loan. But sometimes this
+                    system gives surprising results, like a female person that
+                    has a lot of money in their saving account and a good job,
+                    but still gets rejected. It does this for a lot of women. To
+                    find out whether the system is truly discriminating against
+                    women, you are going to use an interactive visualization
+                    tool that allows you to detect discrimination.
                 </p>
                 <p>
                     <b>Discrimination detection with this tool:</b> The way this
-                    tool detects discrimination is by comparing two groups of
-                    people. One group is a protected group, meaning that their
-                    sex is like in our example female. The other group is the
-                    unprotected group and consists of people that aren't female.
-                    We now determine a decision of the acceptance of a loan like
-                    'accepted' or 'rejected' if people in the protected group
-                    are discriminated against. We will only do this for those
-                    who are female and received a negative decision, in other
-                    words, the ones who were rejected. Let's say that we try to
+                    tool detects discrimination is by comparing possibly
+                    discriminated people, with similar people from the past.
+                    This leads to there being two groups of people. One group is
+                    a protected group, meaning that their sex is like in our
+                    example female. The other group is the unprotected group and
+                    consists of people that aren't female. We now determine a
+                    decision of the acceptance of a loan like 'accepted' or
+                    'rejected' if people in the protected group are
+                    discriminated against. We will only do this for those who
+                    are female and received a negative decision, in other words,
+                    the ones who were rejected. Let’s say that we try to
                     determine if a woman named Carla is discriminated against
                     because her request for a loan didn't get accepted. We will
                     search 3 of the most similar people in the protected group,
                     and we will name them Carla's protected neighbors, and 3 in
                     the unprotected group, are called Carla's unprotected
                     neighbors. Let's say that we found 1 'rejected' among
-                    Carla's unprotected neighbors and 2 negative decisions in
-                    the new protected neighbors. This means that Carla has more
+                    Carla's unprotected neighbors and 2 negative decisions for
+                    her protected neighbors. This means that Carla has more
                     neighbors in her protected neighborhood than in her
-                    unprotected neighborhood. This means that she has a higher
-                    chance of being discriminated against because she is female.
+                    unprotected neighborhood. This could mean that she is being
+                    discriminated against because she is female.
                 </p>
                 <h5>More Technical</h5>
                 <p>
@@ -80,7 +86,7 @@
                 <ul>
                     <li>
                         We determine a set of <b>sensitive variables</b>, like
-                        sex, race, etcetera. Then we determine the values for
+                        sex, race, etc. Then we determine the values for
                         which we want to know if that group is discriminated
                         against, e.g. use sex=female to know if females are
                         discriminated against. Therefore, a tuple is protected
@@ -116,9 +122,10 @@
                     'rejected', then the difference is 1/2.
                 </p>
                 <p>
-                    A positive number for a negative decision value, means that
-                    there may be discrimination, while for a positive decision
-                    value this must be a negative number.
+                    A positive difference value for a negative decision for a
+                    protected client, means that there may be discrimination,
+                    while a negative difference value means that you’re not
+                    necessarily discriminated.
                 </p>
                 <figure>
                     <img src="{{ url_for('static', filename='situation-testing.png') }}"
@@ -141,8 +148,9 @@
                 </figure>
                 <h4>The Default Dataset - German Credit Dataset</h4>
                 <p>
-                    The German credit dataset is a dataset that contains a lot
-                    of tuples. It is typically used to determine whether one
+                    The default dataset used in the system is the German credit
+                    dataset. This dataset is a dataset that contains a lot of
+                    tuples. It is typically used to determine whether one
                     receives a loan based on its tuple values. The variables
                     are:
                 </p>
