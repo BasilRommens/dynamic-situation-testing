@@ -9,3 +9,5 @@ dash>=2.9
 ipywidgets>=7.0.0
 cython
 dash_bootstrap_components
+dash_dangerously_set_inner_html
+scikit-learn

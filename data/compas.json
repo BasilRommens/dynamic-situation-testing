@@ -1,0 +1,72 @@
+{
+  "attribute_types": {
+    "Person_ID": "nominal",
+    "AssessmentID": "nominal",
+    "CaseID": "nominal",
+    "Agency_Text": "nominal",
+    "FirstName": "nominal",
+    "MiddleName": "nominal",
+    "Sex_Code_Text": "nominal",
+    "Ethnic_Code_Text": "nominal",
+    "DateOfBirth": "interval",
+    "ScaleSet": "nominal",
+    "AssessmentReason": "nominal",
+    "Language": "nominal",
+    "LegalStatus": "nominal",
+    "CustodyStatus": "nominal",
+    "MaritalStatus": "nominal",
+    "Screening_Date": "interval",
+    "RecSupervisionLevel": "ordinal",
+    "RecSupervisionLevelText": "ordinal",
+    "Scale_ID": "nominal",
+    "DisplayText": "nominal",
+    "RawScore": "interval",
+    "DecileScore": "ordinal",
+    "ScoreText": "ordinal",
+    "AssessmentType": "nominal",
+    "IsCompleted": "nominal",
+    "IsDeleted": "nominal"
+  },
+  "ordinal_attribute_values": {
+    "RecSupervisionLevel": {
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4
+    },
+    "RecSupervisionLevelText": {
+      "Low": 1,
+      "Medium": 2,
+      "Medium with Override Consideration": 3,
+      "High": 4
+    },
+    "DecileScore": {
+      "-1": -1,
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4,
+      "5": 5,
+      "6": 6,
+      "7": 7,
+      "8": 8,
+      "9": 9,
+      "10": 10
+    },
+    "ScoreText": {
+      "Low": 1,
+      "Medium": 2,
+      "High": 3
+    }
+  },
+  "attributes_to_ignore": [
+    "IsCompleted", "IsDeleted", "Person_ID", "AssessmentID", "Case_ID",
+    "FirstName", "MiddleName", "RawScore", "DecileScore"
+  ],
+  "decision_attribute": {
+    "ScoreText": "High"
+  },
+  "unknowns": [
+    "N/A", "NULL"
+  ]
+}

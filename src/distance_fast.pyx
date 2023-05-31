@@ -43,4 +43,4 @@ cpdef ugly_total_distance(t_1, t_2, attribute_types):
                 summation += abs(v_1 - v_2)
 
     # compute the average distance over all tuple values
-    return summation
+    return summation / len(t_1)

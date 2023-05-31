@@ -68,7 +68,7 @@ def kde_segment(data, segment_dict, color, segment_name, weights=None):
         figure = figure.add_trace(
             go.Scatter(x=vertices[:, 0], y=vertices[:, 1],
                        fill="toself", fillcolor=color,
-                       line=dict(width=0), opacity=0.1,
+                       line=dict(width=0), opacity=0.2,
                        showlegend=not i, name=segment_name))
 
     figure.update_traces(legendgroup=segment_name)

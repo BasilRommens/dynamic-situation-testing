@@ -36,15 +36,27 @@ def calc_dist_mat(tuples, ranked_values, attribute_types, decision_attribute,
             continue
 
         all_interval = _tuples[attributes[idx]].values
+
+        # remove all nan values
+        all_interval = all_interval[~np.isnan(all_interval)]
+
         m_dict[idx] = np.average(all_interval)
         s_dict[idx] = np.std(all_interval)
-    decision_attr_idx = attributes.index(list(decision_attribute.keys())[0])
-    protected_attr_idcs = [attributes.index(protected_attribute)
+
+    if decision_attribute:
+        decision_attr_idx = attributes.index(list(decision_attribute.keys())[0])
+    else:
+        decision_attr_idx = []
+    if protected_attributes:
+        protected_attr_idcs = [attributes.index(protected_attribute)
                            for protected_attribute in
                            protected_attributes.keys()]
+    else:
+        protected_attr_idcs = []
 
     # label encode the entire dataset
     le = preprocessing.LabelEncoder()
+
     # only select columns that contain non-numerical nominal and ordinal values
     object_tuples = _tuples.select_dtypes(include=['object'])
     object_tuples.replace({None: 'NA'}, inplace=True)
@@ -75,7 +87,7 @@ def calc_dist_mat(tuples, ranked_values, attribute_types, decision_attribute,
     if np.dtype('float64') in _tuples.dtypes.values:
         temp_tuples = [[None if np.isnan(v) else v for v in t] for t in
                        temp_tuples]
-    _tuples = temp_tuples[:5_000]
+    _tuples = temp_tuples
 
     start = time.time()
     flat_dist_mat = ppdist(_tuples, metric=metric)

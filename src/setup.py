@@ -88,7 +88,7 @@ def calc_pre_plotting(valid_tuples, tuples, protected_attributes, ignore_cols,
     df = df.drop(columns=ignore_cols)
 
     # bounds for different columns
-    segment_dict_ls = []
+    segment_dict_ls = [{'Duration': [30, 60]}]
 
     # symbol map
     symbol_map = {'negative discrimination': 'line-ew',
@@ -475,6 +475,8 @@ fig, data_pts, valid_tuples, table_ls, contour_names, contours, contour_html, \
     contour_form, contour_form_options, features, attr_types_dict, \
     used_colors_idcs, ordinal_attr_dict, dist_mat, \
     situation_testing_html = calc_german_credit_fig()
+
+fig.show()
 
 data['table'] = table_ls
 data['fig'] = fig

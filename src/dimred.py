@@ -104,8 +104,8 @@ def dimred_pca(dist_mat, dims=8):
     return arr
 
 
-def dimred_umap(dist_mat, dense=False):
-    model = UMAP(n_components=2, densmap=dense)
+def dimred_umap(dist_mat, dense=True):
+    model = UMAP(n_components=2, n_neighbors=100, densmap=dense)
     arr = model.fit_transform(dist_mat)
     return arr
 
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     # german credit dataset
     path = 'data/'
     json_fname = 'german_credit_data.json'
-    csv_fname = 'german_credit_data_class.csv'
+    csv_fname = 'german_credit_data_processed.csv'
     protected_attributes = {"Sex": ["female"]}
     class_col = 'Class'
     ignore_cols = []
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
     # read the data from the csv and json file
     r = read_data(path + json_fname, path + csv_fname)
-    r.df = r.df.head(200)
+    # r.df = r.df.head(200)
     r.df = r.df.drop(columns=ignore_cols)
     print('read data')
 
@@ -192,7 +192,7 @@ if __name__ == '__main__':
 
     # german credit dataset
     df = pd.read_csv(path + csv_fname)
-    df = df.head(200)
+    # df = df.head(200)
     og_df = df.copy()
     sensitive_tuple_idxs = get_tuples_with_attr(df, protected_attributes)
     df = make_numeric(df, r.ordinal_attribute_values)
@@ -235,14 +235,15 @@ if __name__ == '__main__':
     # take the features neither in the ignore list, the class column, nor the
     # protected attributes
     feat_names = [col for col in df.columns if col not in ignore_cols and
-                  col != decision_attribute and col not in protected_attributes.keys()]
+                  col != list(decision_attribute.keys())[
+                      0] and col not in protected_attributes.keys()]
 
     # construct a distance matrix
     m = Matrix(df, heatmap_viz=False, feat_names=feat_names, DD=dist_mat,
                attr_types=r.attribute_types, attr_corr=False)
     dist_mat = m.merged_matrix()
 
-    # show kde plot of flattened distance matrix
+    # show kde plot using the flattened distance matrix
     visualize_kde(dist_mat.flatten())
 
     # dimensionality reduction using distance matrix
@@ -251,12 +252,13 @@ if __name__ == '__main__':
     # different dimensionality reduction techniques
     # dim_red_samples = dimred_glimmer(dist_mat)
     # dim_red_samples = dimred_tsne(dist_mat)
+    # dim_red_samples = dimred_umap(dist_mat, True)
     # dim_red_samples = dimred_graph(dist_mat)
     dim_red_samples = dimred_mds(dist_mat)
 
     # calculate the reciprocal distance matrix if graph matrix
-    reciprocal_dist_mat = np.reciprocal(dist_mat)
-    np.fill_diagonal(reciprocal_dist_mat, 0)
+    # reciprocal_dist_mat = np.reciprocal(dist_mat)
+    # np.fill_diagonal(reciprocal_dist_mat, 0)
 
     # create the distance matrix for the dimensionality reduced points
     flat_mat = scs.distance.pdist(dim_red_samples)
@@ -265,6 +267,7 @@ if __name__ == '__main__':
     # determine the total stress of the distance matrices
     print("regular stress")
     total_stress(dist_mat, sq_mat, n_d_pts, n_d_pts)
+
     # determine the total knn stress of the distance matrices
     knn_els = list()
     for valid_tuple in valid_tuples:
@@ -273,9 +276,14 @@ if __name__ == '__main__':
         unprot_knn = list(
             itertools.product([valid_tuple[0]], dict(valid_tuple[3]).keys()))
         knn_els += prot_knn + unprot_knn
+
     # calculate the total knn stress
     print("knn stress")
     total_knn_stress(dist_mat, sq_mat, n_d_pts, n_d_pts, knn_els)
+
+    # show a heatmap of the distance matrix
+    sns.heatmap(dist_mat)
+    plt.show()
 
     n_feat = sq_mat.shape[0] - n_d_pts
 
@@ -303,6 +311,7 @@ if __name__ == '__main__':
                                         # color=np.array(results),
                                         size=[10] * n_d_pts, width=2,
                                         name='Tuples')
+
     # scatter plot of feature points
     scatter_feature = dynamic.scatter_plot(feat_pts, text=feat_names,
                                            size=[20] * n_feat,
@@ -310,6 +319,7 @@ if __name__ == '__main__':
                                            color=['black'] * n_feat,
                                            # color=[colors_string[i] for i in range(6)],
                                            name='Features')
+
     # scatter plot of sensitive tuples
     scatter_sensitive = dynamic.scatter_plot(
         data_pts.iloc[sensitive_tuple_idxs],

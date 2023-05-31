@@ -11,6 +11,14 @@ import time
 eps = 1e-3
 
 
+def cramer_v_corr(vec1, vec2):
+    # chi2 contingency
+    chi2 = scipy.stats.chi2_contingency(pd.crosstab(vec1, vec2))[0]
+    V = np.sqrt((chi2 / (len(vec1)) * (min(len(np.unique(vec1)),
+                                           len(np.unique(vec2))) - 1)))
+    return V
+
+
 class Matrix:
     def __init__(self, elements, heatmap_viz=False, DD=None, VV=None, VD=None,
                  DV=None, feat_names=[], attr_types=dict(), attr_corr=False):
@@ -68,20 +76,17 @@ class Matrix:
         return distances
 
     def _nominal_nominal_corr(self, vec_nom1, vec_nom2):
-        # cramer's v correlation
-        return scipy.stats.chi2_contingency(pd.crosstab(vec_nom1, vec_nom2))[0]
-        pass
+        return cramer_v_corr(vec_nom1, vec_nom2)
 
     def _nominal_ordinal_corr(self, vec_nom, vec_ord):
-        # cramer's v correlation
-        return scipy.stats.chi2_contingency(pd.crosstab(vec_nom, vec_ord))[0]
+        return cramer_v_corr(vec_nom, vec_ord)
 
     def _nominal_interval_corr(self, vec_nom, vec_int):
         # convert the vec int in as many bins as there are unique values in
         # vec_nom
         vec_int = pd.cut(vec_int, bins=len(np.unique(vec_nom)), labels=False)
-        # cramer's v correlation
-        return scipy.stats.chi2_contingency(pd.crosstab(vec_nom, vec_int))[0]
+
+        return cramer_v_corr(vec_nom, vec_int)
 
     def _ordinal_ordinal_corr(self, vec_ord1, vec_ord2):
         # spearman rho correlation
@@ -143,8 +148,8 @@ class Matrix:
         # (correlation per attr type)
         if self.attr_corr:
             distances = scs.distance.pdist(idx_ls, self._correlation,
-                                       all_vecs=feature_ls,
-                                       attr_names=self.feat_names)
+                                           all_vecs=feature_ls,
+                                           attr_names=self.feat_names)
         # calculate the distances between the V vectors (correlation)
         else:
             distances = scs.distance.pdist(feature_ls, 'correlation')
@@ -170,8 +175,10 @@ class Matrix:
         # calculate the highest and lowest feature value for each feature
         max_instances = np.max(instances_ls, axis=0)
         min_instances = np.min(instances_ls, axis=0)
-        interval_size_instances = max_instances - min_instances
+
+        # scale the instances to be inside the [0,1] interval
         instances_ls -= min_instances
+        interval_size_instances = max_instances - min_instances
         instances_ls /= interval_size_instances
 
         # replace all nans to 0
@@ -211,11 +218,14 @@ class Matrix:
         """
         # get all the instances in a vector list
         instances_ls = -self.elements.values
+
         # calculate the highest and lowest feature value for each feature
         max_instances = np.max(instances_ls, axis=0)
         min_instances = np.min(instances_ls, axis=0)
-        interval_size_instances = max_instances - min_instances
+
+        # scale the instances to be inside the [0,1] interval
         instances_ls -= min_instances
+        interval_size_instances = max_instances - min_instances
         instances_ls /= interval_size_instances
 
         # replace all nans with 0
@@ -248,7 +258,7 @@ class Matrix:
 
         return distances
 
-    def merged_matrix(self, DD_weight=1.0, VV_weigth=1.0, DV_weight=1.0,
+    def merged_matrix(self, DD_weight=1.0, VV_weigth=4.0, DV_weight=1.0,
                       VD_weight=1.0):
         weighted_DD = self.DD * DD_weight
         weighted_VV = self.VV * VV_weigth
@@ -258,8 +268,8 @@ class Matrix:
         # merge the matrices in a single matrix
         upper_mat = np.concatenate((weighted_DD, weighted_DV), axis=1)
         lower_mat = np.concatenate((weighted_VD, weighted_VV), axis=1)
-
         full_mat = np.concatenate((upper_mat, lower_mat), axis=0)
+
         if self.heatmap_viz:
             sns.heatmap(full_mat).set(title='Full Matrix')
             plt.show()
