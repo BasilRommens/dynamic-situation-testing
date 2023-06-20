@@ -241,7 +241,7 @@ def calc_plot(all_tuple_markers, df, og_df, sensitive_tuple_idxs,
     scatter_final = dynamic.set_theme(scatter_final, 'plotly_white')
 
     # set the margins of the plot to 10
-    scatter_final.update_layout(margin=dict(l=10, r=10, b=10, t=10))
+    scatter_final.update_layout(margin=dict(l=10, r=10, b=10, t=30))
 
     # remove the ticks from the plot
     scatter_final.update_xaxes(showticklabels=False)

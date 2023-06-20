@@ -150,6 +150,13 @@ class Matrix:
             distances = scs.distance.pdist(idx_ls, self._correlation,
                                            all_vecs=feature_ls,
                                            attr_names=self.feat_names)
+            for idx, dist in enumerate(distances):
+                # take all the positive values and subtract them from 1
+                if dist > 0:
+                    distances[idx] = 1 - dist
+                # take all the negative values and multiply them with -1
+                if dist < 0:
+                    distances[idx] *= -1
         # calculate the distances between the V vectors (correlation)
         else:
             distances = scs.distance.pdist(feature_ls, 'correlation')

@@ -244,7 +244,7 @@ def stress_german_credit(dim_red_method=dimred_mds, dimred_name='MDS'):
 
     # calculate the stress
     stress(df, attr_types, cols_to_use, DD, dim_red_method, dimred_name,
-           dataset_name='german credit', to_file='out/temp.csv')
+           dataset_name='german credit')
 
 
 def stress_adult(dim_red_method=dimred_mds, dimred_name='MDS'):
@@ -564,7 +564,6 @@ def plot_auto():
 
     # create the segments using seaborn and translate to plotly
     init_segment = go.Figure()
-    # bw_weigths = calc_bw_weights(data_pts.values, 1)
     for i, segment_dict in enumerate(segment_dict_ls):
         # create the name of the segment
         segment_name = create_segment_name(segment_dict)
@@ -598,7 +597,7 @@ def plot_auto():
 
 def plot_stress(stress_dataset='data/tidy-stress.csv', dimred_technique='MDS',
                 knn_ofile='out/knn-stress.png',
-                regular_ofile='out/regular-stress.png', ):
+                regular_ofile='out/regular-stress.png'):
     # read the stress dataset
     df = pd.read_csv(stress_dataset)
 
@@ -613,7 +612,7 @@ def plot_stress(stress_dataset='data/tidy-stress.csv', dimred_technique='MDS',
 
     # create a grouped bar chart of the matrix
     fig = px.bar(df_regular, x='matrix', y='stress', color='dataset',
-                 color_discrete_sequence=cmap.okabe_tl[:5], barmode='group')
+                 color_discrete_sequence=cmap.okabe_tl, barmode='group')
 
     # set the theme of the plot to plotly_white
     fig.update_layout(template='plotly_white')
@@ -631,9 +630,12 @@ def plot_stress(stress_dataset='data/tidy-stress.csv', dimred_technique='MDS',
     # get the knn stress df
     df_knn = df[df['stress_type'] == 'knn']
 
+    # remove the auto MPG dataset from the KNN results
+    df_knn = df_knn[df_knn['dataset'] != 'auto MPG']
+
     # create a grouped bar chart of the matrix
     fig = px.bar(df_knn, x='matrix', y='stress', color='dataset',
-                 color_discrete_sequence=cmap.okabe_tl[:3], barmode='group')
+                 color_discrete_sequence=cmap.okabe_tl, barmode='group')
 
     # set the theme of the plot to plotly_white
     fig.update_layout(template='plotly_white')
@@ -651,25 +653,17 @@ def plot_stress(stress_dataset='data/tidy-stress.csv', dimred_technique='MDS',
 
 if __name__ == '__main__':
     # analyze_usability_study()
-    # stress_auto()
-    stress_german_credit()
-    # stress_german_credit()
-    # stress_adult()
-    # stress_COMPAS()
-    # plot_gaussian()
     # plot_auto()
-    # plot_tidy_stress()
-    # dimred_func_ls = [dimred_umap, dimred_pca]
-    # dimred_name_ls = ['UMAP', 'PCA']
+    # dimred_func_ls = [dimred_mds, dimred_umap, dimred_pca]
+    # dimred_name_ls = ['MDS', 'UMAP', 'PCA']
     # for dimred_func, dimred_name in zip(dimred_func_ls, dimred_name_ls):
     #     stress_auto(dimred_func, dimred_name)
     #     stress_german_credit(dimred_func, dimred_name)
     #     stress_adult(dimred_func, dimred_name)
     #     stress_COMPAS(dimred_func, dimred_name)
-    # plot_stress('data/tidy-stress.csv', 'MDS',
-    #             knn_ofile='out/mds-stress-knn.png',
-    #             regular_ofile='out/mds-stress-regular.png')
-    # plot_stress('data/stress.csv', 'UMAP', knn_ofile='out/umap-stress-knn.png',
-    #             regular_ofile='out/umap-stress-regular.png')
-    # plot_stress('data/stress.csv', 'PCA', knn_ofile='out/pca-stress-knn.png',
-    #             regular_ofile='out/pca-stress-regular.png')
+    plot_stress('data/stress.csv', 'MDS', knn_ofile='out/mds-stress-knn.png',
+                regular_ofile='out/mds-stress-regular.png')
+    plot_stress('data/stress.csv', 'UMAP', knn_ofile='out/umap-stress-knn.png',
+                regular_ofile='out/umap-stress-regular.png')
+    plot_stress('data/stress.csv', 'PCA', knn_ofile='out/pca-stress-knn.png',
+                regular_ofile='out/pca-stress-regular.png')

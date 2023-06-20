@@ -1,10 +1,11 @@
 import math
 
-cpdef ugly_total_distance(t_1, t_2, attribute_types):
+cpdef ugly_total_distance(t_1, t_2, s_dict, attribute_types):
     """
     determine the total distance between two tuples
     :param t_1: first tuple
     :param t_2: second tuple
+    :param s_dict: the standard deviation dictionary
     :param attribute_types: the types at each index of a tuple
     :return: total distance between the two tuples
     """

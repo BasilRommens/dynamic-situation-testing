@@ -240,7 +240,7 @@ if __name__ == '__main__':
 
     # construct a distance matrix
     m = Matrix(df, heatmap_viz=False, feat_names=feat_names, DD=dist_mat,
-               attr_types=r.attribute_types, attr_corr=False)
+               attr_types=r.attribute_types, attr_corr=True)
     dist_mat = m.merged_matrix()
 
     # show kde plot using the flattened distance matrix

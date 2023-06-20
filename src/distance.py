@@ -241,4 +241,5 @@ class Metric:
         self.protected_attr_idcs = protected_attr_idcs
 
     def __call__(self, u, v):
-        return distance_fast.ugly_total_distance(u, v, self.attribute_types)
+        return distance_fast.ugly_total_distance(u, v, self.s_dict,
+                                                 self.attribute_types)
