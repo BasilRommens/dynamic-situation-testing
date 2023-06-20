@@ -15,6 +15,7 @@ To set up the project for the first time run the following command in terminal
 from the root of the project.
 
 ```shell
+chmod +x setup.sh
 ./setup.sh
 ```
 
@@ -25,6 +26,7 @@ project. It will also open a browser tab with the correct url. The german credit
 data set with random class labels is used as default.
 
 ```shell
+chmod +x run.sh
 ./run.sh
 ```
 

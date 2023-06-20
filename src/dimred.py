@@ -17,7 +17,7 @@ import os
 
 # suppress tensorflow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-from umap import UMAP
+import umap
 
 from dataset import create_gaussian
 from globals import colors_string
@@ -105,7 +105,7 @@ def dimred_pca(dist_mat, dims=8):
 
 
 def dimred_umap(dist_mat, dense=True):
-    model = UMAP(n_components=2, n_neighbors=100, densmap=dense)
+    model = umap.UMAP(n_components=2, n_neighbors=100, densmap=dense)
     arr = model.fit_transform(dist_mat)
     return arr
 
