@@ -635,7 +635,69 @@ def plot_stress(stress_dataset='data/tidy-stress.csv', dimred_technique='MDS',
 
     # create a grouped bar chart of the matrix
     fig = px.bar(df_knn, x='matrix', y='stress', color='dataset',
-                 color_discrete_sequence=cmap.okabe_tl, barmode='group')
+                 color_discrete_sequence=cmap.okabe_tl[1:], barmode='group')
+
+    # set the theme of the plot to plotly_white
+    fig.update_layout(template='plotly_white')
+
+    # move the legend to the top middle
+    fig.update_layout(legend=dict(orientation='h', yanchor='top',
+                                  y=1.1, xanchor='center', x=0.5))
+
+    # make the legend title bold
+    fig.update_layout(legend_title_text='<b>Dataset:</b>')
+
+    # save the figure as png
+    fig.write_image(knn_ofile)
+
+
+def plot_presentation(stress_dataset='data/stress.csv'):
+    regular_ofile = 'out/regular-presentation.png'
+    knn_ofile = 'out/knn-presentation.png'
+
+    # read the stress dataset
+    df = pd.read_csv(stress_dataset)
+
+    # remove the gaussian cloud results
+    df = df[df['dataset'] != 'gaussian']
+
+    # only take the results with specified dimred technique
+    df = df[df['dimred_technique'].isin(['MDS', 'PCA'])]
+
+    # get only all stress results
+    df = df[df['matrix'] == 'All']
+
+    # get the regular stress df
+    df_regular = df[df['stress_type'] == 'regular']
+
+    # create a grouped bar chart of the matrix
+    fig = px.bar(df_regular, x='dimred_technique', y='stress', color='dataset',
+                 color_discrete_sequence=cmap.okabe_tl, barmode='group',
+                 labels={'stress_type': 'Stress Type', 'stress': 'Stress'})
+
+    # set the theme of the plot to plotly_white
+    fig.update_layout(template='plotly_white')
+
+    # move the legend to the top middle
+    fig.update_layout(legend=dict(orientation='h', yanchor='top',
+                                  y=1.1, xanchor='center', x=0.5))
+
+    # make the legend title bold
+    fig.update_layout(legend_title_text='<b>Dataset:</b>')
+
+    # save the figure as png
+    fig.write_image(regular_ofile)
+
+    # get only the MDS knn results
+    df_knn = df[df['dimred_technique'] == 'MDS']
+
+    # remove the auto MPG dataset from the KNN results
+    df_knn = df_knn[df_knn['dataset'] != 'auto MPG']
+
+    # create a grouped bar chart of the matrix
+    fig = px.bar(df_knn, x='stress_type', y='stress', color='dataset',
+                 color_discrete_sequence=cmap.okabe_tl[1:], barmode='group',
+                 labels={'stress_type': 'Stress Type', 'stress': 'Stress'})
 
     # set the theme of the plot to plotly_white
     fig.update_layout(template='plotly_white')
@@ -661,9 +723,10 @@ if __name__ == '__main__':
     #     stress_german_credit(dimred_func, dimred_name)
     #     stress_adult(dimred_func, dimred_name)
     #     stress_COMPAS(dimred_func, dimred_name)
-    plot_stress('data/stress.csv', 'MDS', knn_ofile='out/mds-stress-knn.png',
-                regular_ofile='out/mds-stress-regular.png')
-    plot_stress('data/stress.csv', 'UMAP', knn_ofile='out/umap-stress-knn.png',
-                regular_ofile='out/umap-stress-regular.png')
-    plot_stress('data/stress.csv', 'PCA', knn_ofile='out/pca-stress-knn.png',
-                regular_ofile='out/pca-stress-regular.png')
+    # plot_stress('data/stress.csv', 'MDS', knn_ofile='out/mds-stress-knn.png',
+    #             regular_ofile='out/mds-stress-regular.png')
+    # plot_stress('data/stress.csv', 'UMAP', knn_ofile='out/umap-stress-knn.png',
+    #             regular_ofile='out/umap-stress-regular.png')
+    # plot_stress('data/stress.csv', 'PCA', knn_ofile='out/pca-stress-knn.png',
+    #             regular_ofile='out/pca-stress-regular.png')
+    plot_presentation()
