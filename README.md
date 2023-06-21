@@ -22,8 +22,8 @@ chmod +x setup.sh
 ## Run
 
 To run the project run the following command in terminal from the root of the
-project. It will also open a browser tab with the correct url. The german credit
-data set with random class labels is used as default.
+project. The german credit data set with random class labels is used as default.
+Use http://localhost:5000/ to access the web tool.
 
 ```shell
 chmod +x run.sh
