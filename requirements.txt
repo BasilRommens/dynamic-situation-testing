@@ -11,3 +11,4 @@ cython
 dash_bootstrap_components
 dash_dangerously_set_inner_html
 scikit-learn
+umap
