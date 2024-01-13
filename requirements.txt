@@ -1,4 +1,4 @@
-numpy==1.24.2
+numpy==1.26.3
 seaborn==0.12.2
 matplotlib==3.5.2
 Flask~=2.2.2
@@ -12,3 +12,4 @@ dash_bootstrap_components
 dash_dangerously_set_inner_html
 scikit-learn==1.2.2
 umap==0.1.1
+setuptools==69.0.3
